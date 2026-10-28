@@ -2,7 +2,9 @@
 
 import { useAuthActions } from "@convex-dev/auth/react";
 import { usePreloadedQuery, useQuery, type Preloaded } from "convex/react";
+import Link from "next/link";
 import { api } from "@/convex/_generated/api";
+import { FOOD_COPY } from "@/features/food/copy";
 import { ActiveStrengthScreen } from "@/features/logging/components/ActiveStrengthScreen";
 import { useActiveWorkout } from "@/features/logging/context/ActiveWorkoutContext";
 import { startOfWeek } from "@/shared/lib/date";
@@ -34,9 +36,18 @@ export function WorkoutHome({
 
   return (
     <div className="pt-2">
-      <div className="flex items-baseline justify-between pt-6.5 pb-4.5">
-        <div className="text-[26px] font-extrabold tracking-tight">
-          <span className="text-blue">KMD&apos;s Workout</span>
+      <div className="flex items-center justify-between pt-6.5 pb-4.5">
+        <div>
+          <div className="text-[26px] font-extrabold tracking-tight">
+            <span className="text-blue">KMD&apos;s Workout</span>
+          </div>
+          {/* Temporary until food has its own tab. */}
+          <Link
+            href="/food"
+            className="text-[13px] font-semibold text-blue underline outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-solid focus-visible:outline-blue"
+          >
+            {FOOD_COPY.navLink}
+          </Link>
         </div>
         <button
           type="button"

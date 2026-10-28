@@ -1,5 +1,8 @@
 "use client";
 
+import { useEffect, useId, useRef } from "react";
+import { useFocusTrap } from "./useFocusTrap";
+
 export function ConfirmDialog({
   open,
   message,
@@ -15,6 +18,19 @@ export function ConfirmDialog({
   onConfirm: () => void;
   onCancel: () => void;
 }) {
+  const panelRef = useRef<HTMLDivElement>(null);
+  const titleId = useId();
+  useFocusTrap(open, panelRef);
+
+  useEffect(() => {
+    if (!open) return;
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") onCancel();
+    }
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [open, onCancel]);
+
   if (!open) return null;
   return (
     <div
@@ -23,21 +39,30 @@ export function ConfirmDialog({
         if (e.target === e.currentTarget) onCancel();
       }}
     >
-      <div className="w-full max-w-85 rounded-2xl border border-line bg-surface p-5.5">
-        <p className="mb-5 text-[15px] leading-snug text-ink">{message}</p>
+      <div
+        ref={panelRef}
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        className="w-full max-w-85 rounded-2xl border border-line bg-surface p-5.5"
+      >
+        <p id={titleId} className="mb-5 text-[15px] leading-snug text-ink">
+          {message}
+        </p>
         <div className="flex justify-end gap-2.5">
           <button
             type="button"
+            data-autofocus
             onClick={onCancel}
-            className="rounded-[10px] bg-surface-2 px-4.5 py-2.75 text-sm font-bold text-ink cursor-pointer"
+            className="rounded-[10px] bg-surface-2 px-4.5 py-2.75 text-sm font-bold text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-solid focus-visible:outline-blue"
           >
             Cancel
           </button>
           <button
             type="button"
             onClick={onConfirm}
-            className={`rounded-[10px] px-4.5 py-2.75 text-sm font-bold text-white cursor-pointer ${
-              danger ? "bg-danger" : "bg-blue"
+            className={`rounded-[10px] px-4.5 py-2.75 text-sm font-bold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-solid focus-visible:outline-blue ${
+              danger ? "bg-danger text-black" : "bg-blue text-black"
             }`}
           >
             {confirmLabel ?? (danger ? "Delete" : "OK")}
