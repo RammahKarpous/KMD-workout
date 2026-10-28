@@ -53,6 +53,15 @@ export function formatShortDiaryDate(iso: string): string {
   return `${day} ${MONTHS_SHORT[month - 1]}`;
 }
 
+const WEEKDAYS_SHORT = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+/** "Wed 28 Oct", using the calendar date's weekday. */
+export function formatRangeDay(iso: string): string {
+  const { year, month, day } = parseIsoDate(iso);
+  const weekday = WEEKDAYS_SHORT[new Date(Date.UTC(year, month - 1, day)).getUTCDay()];
+  return `${weekday} ${formatShortDiaryDate(iso)}`;
+}
+
 /** Monday through Friday of the week that contains `referenceDate`. */
 export function redMeatWeekRange(referenceDate: string): { start: string; end: string } {
   const start = mondayOfWeek(referenceDate);

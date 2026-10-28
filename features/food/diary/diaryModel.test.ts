@@ -5,6 +5,7 @@ import {
   diaryRedMeatGrams,
   entryAmountText,
   formatDiaryDate,
+  formatRangeDay,
   groupEntriesByMoment,
   limitReadout,
   localTodayIso,
@@ -37,6 +38,7 @@ describe("diary dates", () => {
 
   it("formats the weekday of the calendar date", () => {
     expect(formatDiaryDate("2026-10-28")).toBe("Wednesday 28 October 2026");
+    expect(formatRangeDay("2026-10-28")).toBe("Wed 28 Oct");
   });
 
   it("uses Monday to Friday for the red-meat week", () => {
