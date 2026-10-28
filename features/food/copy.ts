@@ -5,6 +5,9 @@ export const FOOD_COPY = {
   intro: "Your food tracker.",
   productsLink: "Products",
   diaryLink: "Diary",
+  overviewLink: "Overview",
+  dietistLink: "Dietist",
+  limitsLink: "Limits",
   /** Shown on the workout home until food gets its own tab. */
   navLink: "Food",
 } as const;
