@@ -1,6 +1,7 @@
 "use client";
 
 import { GripVertical } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { forwardRef } from "react";
 import { ExerciseThumb } from "@/features/exercises/components/ExerciseThumb";
 import { CheckIcon, ClockIcon } from "./icons";
@@ -78,6 +79,8 @@ export const SetBlock = forwardRef<
   },
   ref
 ) {
+  const t = useTranslations("sets");
+  const logging = useTranslations("logging");
   function updateSet(i: number, patch: Partial<DraftSet>) {
     const sets = exercise.sets.map((s, idx) =>
       idx === i ? { ...s, ...patch } : s
@@ -132,7 +135,7 @@ export const SetBlock = forwardRef<
           <button
             type="button"
             onPointerDown={onDragHandlePointerDown}
-            aria-label={`Reorder ${exercise.name}`}
+            aria-label={t("reorder", { name: exercise.name })}
             className="touch-none p-1 text-muted-2 active:cursor-grabbing"
           >
             <GripVertical className="h-4.5 w-4.5" strokeWidth={2} />
@@ -158,7 +161,7 @@ export const SetBlock = forwardRef<
           type="button"
           onClick={onRemove}
           className="px-1.5 text-[19px] leading-none text-muted-2"
-          aria-label={`Remove ${exercise.name}`}
+          aria-label={t("remove", { name: exercise.name })}
         >
           &times;
         </button>
@@ -167,7 +170,7 @@ export const SetBlock = forwardRef<
       {!collapsed && mode === "log" && (
         <textarea
           rows={1}
-          placeholder="Add notes here…"
+          placeholder={t("notesPlaceholder")}
           value={exercise.notes ?? ""}
           onChange={(e) => onChange({ ...exercise, notes: e.target.value })}
           className="mb-2.5 w-full resize-none bg-transparent text-base text-muted outline-none placeholder:text-muted-2"
@@ -177,8 +180,8 @@ export const SetBlock = forwardRef<
       {!collapsed && (exercise.cardio ? (
         <>
           <div className="mb-1.5 grid grid-cols-[24px_1fr_32px] gap-2 px-0.5 text-[10.5px] font-bold uppercase tracking-wide text-muted-2">
-            <span className="text-center">Set</span>
-            <span className="text-center">Minutes</span>
+            <span className="text-center">{t("set")}</span>
+            <span className="text-center">{t("minutes")}</span>
             <span />
           </div>
           {exercise.sets.map((s, i) => (
@@ -195,7 +198,7 @@ export const SetBlock = forwardRef<
                   type="number"
                   min={0}
                   inputMode="numeric"
-                  placeholder="min"
+                  placeholder={t("minPlaceholder")}
                   value={s.min ?? ""}
                   onChange={(e) => updateSet(i, { min: e.target.value })}
                   className={`w-full min-w-0 rounded-xl border px-2 py-2.5 text-center text-base outline-none focus:border-blue ${
@@ -219,11 +222,7 @@ export const SetBlock = forwardRef<
           {exercise.name === "StairMaster" && (
             <div className="mt-3 flex gap-3 rounded-card border border-line bg-surface p-4 text-[13.5px] leading-snug text-muted">
               <ClockIcon />
-              <span>
-                Around 20–30 min at a conversational pace keeps stress low.
-                Feeling wound up rather than tired? It&rsquo;s fine to stop
-                earlier.
-              </span>
+              <span>{logging("stairNote")}</span>
             </div>
           )}
         </>
@@ -232,10 +231,10 @@ export const SetBlock = forwardRef<
           <div
             className={`mb-1.5 grid ${setCols} gap-2 px-0.5 text-[10.5px] font-bold uppercase tracking-wide text-muted-2`}
           >
-            <span className="text-center">Set</span>
-            {showPrevious && <span className="text-center">Previous</span>}
-            <span className="text-center">Kg</span>
-            <span className="text-center">Reps</span>
+            <span className="text-center">{t("set")}</span>
+            {showPrevious && <span className="text-center">{t("previous")}</span>}
+            <span className="text-center">{t("kg")}</span>
+            <span className="text-center">{t("reps")}</span>
             <span />
           </div>
           {exercise.sets.map((s, i) => {
@@ -253,11 +252,9 @@ export const SetBlock = forwardRef<
                     className={`text-center text-xs font-bold ${
                       s.warmup ? "text-orange" : "text-muted-2"
                     }`}
-                    aria-label={
-                      s.warmup ? "Warm-up set — tap to mark as working set" : "Tap to mark as warm-up"
-                    }
+                    aria-label={s.warmup ? t("warmupOn") : t("warmupOff")}
                   >
-                    {s.warmup ? "W" : workingSetNumber[i]}
+                    {s.warmup ? t("warmupMark") : workingSetNumber[i]}
                   </button>
                   {showPrevious && (
                     <span className="truncate text-center text-[13px] text-muted-2">
@@ -310,7 +307,7 @@ export const SetBlock = forwardRef<
           onClick={addSet}
           className="mt-1 w-full rounded-[10px] bg-surface-2 py-2.5 text-[13px] font-bold text-blue"
         >
-          + Set
+          {t("add")}
         </button>
       )}
     </div>

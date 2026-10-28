@@ -1,4 +1,7 @@
-import { formatDiaryNumber, limitReadout } from "./diaryModel";
+"use client";
+
+import { formatDiaryNumber } from "./diaryModel";
+import { useLimitText } from "../useLimitText";
 
 /**
  * A meter whose over-limit state is written out, not only colored.
@@ -15,7 +18,8 @@ export function LimitMeter({
   limit: number;
   unit: string;
 }) {
-  const readout = limitReadout(label, value, limit, unit);
+  const text = useLimitText();
+  const readout = text(label, value, limit, unit);
   const labelId = `meter-${label.replace(/\s+/g, "-").toLowerCase()}`;
   return (
     <div>

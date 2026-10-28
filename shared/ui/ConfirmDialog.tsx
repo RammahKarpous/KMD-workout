@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useEffect, useId, useRef } from "react";
 import { useFocusTrap } from "./useFocusTrap";
 
@@ -20,6 +21,7 @@ export function ConfirmDialog({
 }) {
   const panelRef = useRef<HTMLDivElement>(null);
   const titleId = useId();
+  const t = useTranslations("common");
   useFocusTrap(open, panelRef);
 
   useEffect(() => {
@@ -56,7 +58,7 @@ export function ConfirmDialog({
             onClick={onCancel}
             className="rounded-[10px] bg-surface-2 px-4.5 py-2.75 text-sm font-bold text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-solid focus-visible:outline-blue"
           >
-            Cancel
+            {t("cancel")}
           </button>
           <button
             type="button"
@@ -65,7 +67,7 @@ export function ConfirmDialog({
               danger ? "bg-danger text-black" : "bg-blue text-black"
             }`}
           >
-            {confirmLabel ?? (danger ? "Delete" : "OK")}
+            {confirmLabel ?? (danger ? t("delete") : t("ok"))}
           </button>
         </div>
       </div>

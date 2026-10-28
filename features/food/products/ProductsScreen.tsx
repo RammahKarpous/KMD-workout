@@ -1,21 +1,22 @@
 "use client";
 
 import { useMutation, usePaginatedQuery } from "convex/react";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { api } from "@/convex/_generated/api";
 import type { Doc } from "@/convex/_generated/dataModel";
 import { ConfirmDialog } from "@/shared/ui/ConfirmDialog";
 import { useSheet } from "@/shared/ui/SheetHost";
-import { PRODUCTS_COPY, productResultSummary } from "./copy";
 import { FOCUS_RING } from "./focus";
 import { ProductFormSheet } from "./ProductFormSheet";
-import { formatPer100g, nutrientLabel, productQuery, NUTRIENT_FIELD_KEYS } from "./productForm";
+import { formatPer100g, productQuery, productSummary, NUTRIENT_FIELD_KEYS } from "./productForm";
 
 const PAGE_SIZE = 20;
 const SEARCH_DELAY_MS = 300;
 
 export function ProductsScreen() {
+  const t = useTranslations("food.products");
   const { push } = useSheet();
   const removeProduct = useMutation(api.foodProducts.remove);
   const [search, setSearch] = useState("");
@@ -70,9 +71,9 @@ export function ProductsScreen() {
   return (
     <div className="pt-2">
       <div className="flex items-baseline justify-between gap-3 pt-6.5 pb-4.5">
-        <h1 className="text-[26px] font-extrabold tracking-tight">{PRODUCTS_COPY.heading}</h1>
+        <h1 className="text-[26px] font-extrabold tracking-tight">{t("heading")}</h1>
         <Link href="/food" className={`text-[13px] font-semibold text-blue underline ${FOCUS_RING}`}>
-          {PRODUCTS_COPY.backToFood}
+          {t("backToFood")}
         </Link>
       </div>
 
@@ -81,12 +82,12 @@ export function ProductsScreen() {
         onClick={openCreate}
         className={`mb-4 w-full rounded-2xl bg-blue py-4 text-[15.5px] font-bold text-black ${FOCUS_RING}`}
       >
-        {PRODUCTS_COPY.add}
+        {t("add")}
       </button>
 
       <div className="mb-3">
         <label htmlFor="product-search" className="mb-1.5 block text-[12.5px] font-semibold text-muted">
-          {PRODUCTS_COPY.searchLabel}
+          {t("searchLabel")}
         </label>
         <input
           id="product-search"
@@ -94,7 +95,7 @@ export function ProductsScreen() {
           value={search}
           maxLength={64}
           autoComplete="off"
-          placeholder={PRODUCTS_COPY.searchPlaceholder}
+          placeholder={t("searchPlaceholder")}
           onChange={(event) => {
             const next = event.target.value;
             setSearch(next);
@@ -106,12 +107,15 @@ export function ProductsScreen() {
       </div>
 
       <p aria-live="polite" aria-atomic="true" className="mb-3 text-sm text-muted">
-        {productResultSummary({
-          query: plan.mode === "search" ? plan.query : "",
-          count: active.results.length,
-          status: summaryStatus,
-          canLoadMore: active.status === "CanLoadMore" || active.status === "LoadingMore",
-        })}
+        {(() => {
+          const summary = productSummary({
+            query: plan.mode === "search" ? plan.query : "",
+            count: active.results.length,
+            status: summaryStatus,
+            canLoadMore: active.status === "CanLoadMore" || active.status === "LoadingMore",
+          });
+          return t(summary.key, summary.values);
+        })()}
       </p>
       <p aria-live="polite" className="sr-only">
         {statusMessage ?? ""}
@@ -155,7 +159,7 @@ export function ProductsScreen() {
           onClick={() => active.loadMore(PAGE_SIZE)}
           className={`mt-3 w-full rounded-xl bg-surface py-3 text-[13.5px] font-bold text-blue ${FOCUS_RING}`}
         >
-          {PRODUCTS_COPY.loadMore}
+          {t("loadMore")}
         </button>
       ) : null}
       {active.status === "LoadingMore" ? (
@@ -165,16 +169,16 @@ export function ProductsScreen() {
       <ConfirmDialog
         open={pendingDelete !== null}
         danger
-        message={pendingDelete ? PRODUCTS_COPY.deleteConfirm(pendingDelete.name) : ""}
-        confirmLabel={PRODUCTS_COPY.delete}
+        message={pendingDelete ? t("deleteConfirm", { name: pendingDelete.name }) : ""}
+        confirmLabel={t("delete")}
         onCancel={() => setPendingDelete(null)}
         onConfirm={() => {
           const product = pendingDelete;
           setPendingDelete(null);
           if (!product) return;
           void removeProduct({ id: product._id })
-            .then(() => setStatusMessage(PRODUCTS_COPY.deleted))
-            .catch(() => setDeleteError(PRODUCTS_COPY.deleteFailed));
+            .then(() => setStatusMessage(t("deleted")))
+            .catch(() => setDeleteError(t("deleteFailed")));
         }}
       />
     </div>
@@ -190,6 +194,8 @@ function ProductCard({
   onEdit: () => void;
   onDelete: () => void;
 }) {
+  const t = useTranslations("food.products");
+  const nutrients = useTranslations("food.nutrients");
   const titleId = `product-card-${product._id}`;
   return (
     <article aria-labelledby={titleId} className="rounded-card border border-line bg-surface p-3.5">
@@ -202,10 +208,10 @@ function ProductCard({
       <dl className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 sm:grid-cols-3">
         {NUTRIENT_FIELD_KEYS.map((key) => (
           <div key={key}>
-            <dt className="text-[11px] font-semibold text-muted">{nutrientLabel(key)}</dt>
+            <dt className="text-[11px] font-semibold text-muted">{nutrients(key)}</dt>
             <dd className="text-sm text-ink">
               {formatPer100g(product.per100g[key])}
-              <span className="text-muted"> {key === "kcal" ? PRODUCTS_COPY.unitKcal : PRODUCTS_COPY.unitGrams}</span>
+              <span className="text-muted"> {key === "kcal" ? t("unitKcal") : t("unitGrams")}</span>
             </dd>
           </div>
         ))}
@@ -214,18 +220,18 @@ function ProductCard({
         <button
           type="button"
           onClick={onEdit}
-          aria-label={PRODUCTS_COPY.editNamed(product.name)}
+          aria-label={t("editNamed", { name: product.name })}
           className={`min-h-11 flex-1 rounded-xl bg-surface-2 text-sm font-bold text-ink ${FOCUS_RING}`}
         >
-          {PRODUCTS_COPY.edit}
+          {t("edit")}
         </button>
         <button
           type="button"
           onClick={onDelete}
-          aria-label={PRODUCTS_COPY.deleteNamed(product.name)}
+          aria-label={t("deleteNamed", { name: product.name })}
           className={`min-h-11 flex-1 rounded-xl bg-surface-2 text-sm font-bold text-danger ${FOCUS_RING}`}
         >
-          {PRODUCTS_COPY.delete}
+          {t("delete")}
         </button>
       </div>
     </article>

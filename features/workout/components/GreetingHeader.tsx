@@ -1,4 +1,7 @@
-import { greeting } from "@/shared/lib/date";
+"use client";
+
+import { useTranslations } from "next-intl";
+import { useDateText } from "@/features/i18n/useDateText";
 import { Skeleton } from "@/shared/ui/Skeleton";
 import { MonthOverview } from "./MonthOverview";
 
@@ -7,18 +10,20 @@ export function GreetingHeader({
 }: {
   sessionsThisWeek: number | undefined;
 }) {
+  const t = useTranslations("workout");
+  const dates = useDateText();
   const sub =
     sessionsThisWeek === undefined
       ? undefined
       : sessionsThisWeek === 0
-        ? "No sessions yet this week — and that's okay."
+        ? t("noneThisWeek")
         : sessionsThisWeek === 1
-          ? "1 session this week. Nice start."
-          : `${sessionsThisWeek} sessions this week. Good rhythm.`;
+          ? t("oneThisWeek")
+          : t("manyThisWeek", { count: sessionsThisWeek });
 
   return (
     <div className="rounded-card bg-surface p-5">
-      <h2 className="text-[23px] font-bold">{greeting()}.</h2>
+      <h2 className="text-[23px] font-bold">{dates.greeting()}.</h2>
       {sub === undefined ? (
         <Skeleton className="mt-1.5 h-4 w-40" />
       ) : (

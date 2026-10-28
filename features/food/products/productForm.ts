@@ -1,7 +1,6 @@
 import { z } from "zod";
 import { barcodeDigits } from "@/shared/lib/food";
 import type { Nutrients } from "@/shared/lib/nutrients";
-import { PRODUCTS_COPY } from "./copy";
 
 export const NUTRIENT_FIELD_KEYS = [
   "kcal",
@@ -33,14 +32,6 @@ export type ProductFormValue = {
   per100g: Nutrients;
 };
 
-const NUTRIENT_LABEL: Record<NutrientFieldKey, string> = {
-  kcal: PRODUCTS_COPY.calories,
-  fat: PRODUCTS_COPY.fat,
-  saturatedFat: PRODUCTS_COPY.saturatedFat,
-  carbs: PRODUCTS_COPY.carbs,
-  sugar: PRODUCTS_COPY.sugar,
-  protein: PRODUCTS_COPY.protein,
-};
 
 /** "1,5" and "1.5" are both accepted, matching the Laravel number inputs. */
 export function parseNutrient(raw: string): number | undefined {
@@ -64,7 +55,7 @@ function nutrientField() {
   return z
     .string()
     .trim()
-    .refine((value) => parseNutrient(value) !== undefined, PRODUCTS_COPY.nutrientInvalid)
+    .refine((value) => parseNutrient(value) !== undefined, "nutrientInvalid")
     .transform((value) => parseNutrient(value) ?? 0);
 }
 
@@ -72,11 +63,11 @@ export const productFormSchema = z.object({
   name: z
     .string()
     .trim()
-    .min(1, PRODUCTS_COPY.nameRequired)
-    .max(200, PRODUCTS_COPY.nameTooLong),
+    .min(1, "nameRequired")
+    .max(200, "nameTooLong"),
   barcode: z
     .string()
-    .refine((value) => value.trim() === "" || parseBarcode(value) !== undefined, PRODUCTS_COPY.barcodeInvalid)
+    .refine((value) => value.trim() === "" || parseBarcode(value) !== undefined, "barcodeInvalid")
     .transform((value) => parseBarcode(value)),
   kcal: nutrientField(),
   fat: nutrientField(),
@@ -178,8 +169,31 @@ export function productQuery(raw: string): { mode: "list" } | { mode: "search"; 
   return { mode: "search", query };
 }
 
-export function nutrientLabel(key: NutrientFieldKey): string {
-  return NUTRIENT_LABEL[key];
+export function productSummary(input: {
+  query: string;
+  count: number;
+  status: "loading" | "loading-more" | "ready";
+  canLoadMore: boolean;
+}): { key: string; values: Record<string, string | number> } {
+  if (input.status === "loading") return { key: "summaryLoading", values: {} };
+  if (input.status === "loading-more") return { key: "summaryLoadingMore", values: {} };
+  const query = input.query;
+  if (query) {
+    if (input.count === 0) return { key: "summaryEmptySearch", values: { query } };
+    if (input.count === 1) {
+      return { key: input.canLoadMore ? "summaryMatchOneMore" : "summaryMatchOne", values: { query } };
+    }
+    return {
+      key: input.canLoadMore ? "summaryMatchMore" : "summaryMatch",
+      values: { count: input.count, query },
+    };
+  }
+  if (input.count === 0) return { key: "summaryEmpty", values: {} };
+  if (input.count === 1) return { key: "summaryOne", values: {} };
+  return {
+    key: input.canLoadMore ? "summaryCountMore" : "summaryCount",
+    values: { count: input.count },
+  };
 }
 
 function isFieldKey(key: string): key is keyof ProductFormInput {

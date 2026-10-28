@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation, useQuery } from "convex/react";
+import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 import { api } from "@/convex/_generated/api";
 import type { Doc, Id } from "@/convex/_generated/dataModel";
@@ -27,6 +28,7 @@ export function RoutineEditorSheet({
   const data = useQuery(api.workout.listFoldersAndRoutines);
   const createRoutine = useMutation(api.workout.createRoutine);
   const updateRoutine = useMutation(api.workout.updateRoutine);
+  const t = useTranslations("workout");
 
   const [draft, setDraft] = useState<RoutineDraft>(() => ({
     id: existing?._id,
@@ -162,11 +164,11 @@ export function RoutineEditorSheet({
 
   async function save() {
     if (!draft.name.trim()) {
-      setAlert("Give your routine a name.");
+      setAlert(t("routineNameRequired"));
       return;
     }
     if (draft.exercises.length === 0) {
-      setAlert("Add at least one exercise.");
+      setAlert(t("exerciseRequired"));
       return;
     }
     if (draft.id) {
@@ -188,14 +190,14 @@ export function RoutineEditorSheet({
 
   return (
     <div className="p-4">
-      <SheetHeader title={draft.id ? "Routine" : "New routine"} onClose={pop} />
+      <SheetHeader title={draft.id ? t("routineTitle") : t("newRoutineTitle")} onClose={pop} />
 
       <div className="mb-4">
         <label className="mb-1.5 block text-[12.5px] font-semibold text-muted">
-          Routine name
+          {t("routineName")}
         </label>
         <input
-          placeholder="Leg day"
+          placeholder={t("routinePlaceholder")}
           value={draft.name}
           onChange={(e) => setDraft((d) => ({ ...d, name: e.target.value }))}
           className="w-full rounded-xl border border-line bg-surface px-3.5 py-3 text-base text-ink outline-none focus:border-blue"
@@ -204,10 +206,10 @@ export function RoutineEditorSheet({
 
       <div className="relative mb-4">
         <label className="mb-1.5 block text-[12.5px] font-semibold text-muted">
-          Folder (optional)
+          {t("folderOptional")}
         </label>
         <input
-          placeholder="e.g. Push/Pull/Legs — type a new or existing folder"
+          placeholder={t("folderHint")}
           value={draft.folderName}
           onChange={(e) => setDraft((d) => ({ ...d, folderName: e.target.value }))}
           onFocus={() => setFolderMenuOpen(true)}
@@ -236,9 +238,9 @@ export function RoutineEditorSheet({
       {draft.exercises.length === 0 && (
         <div className="py-8 text-center text-[14px] text-muted-2">
           <span className="mb-1.5 block text-lg font-bold text-muted">
-            No exercises yet.
+            {t("noExercisesYet")}
           </span>
-          Add exercises and set the target sets and reps for each.
+          {t("addExerciseHint")}
         </div>
       )}
 
@@ -268,7 +270,7 @@ export function RoutineEditorSheet({
         onClick={openPicker}
         className="w-full rounded-2xl bg-surface py-4 text-[15.5px] font-bold text-blue"
       >
-        + Add exercise
+        {t("addExercise")}
       </button>
 
       <button
@@ -276,7 +278,7 @@ export function RoutineEditorSheet({
         onClick={save}
         className="mt-4 w-full rounded-2xl bg-blue py-4 text-[15.5px] font-bold text-white"
       >
-        Save routine
+        {t("saveRoutine")}
       </button>
 
       <AlertDialog

@@ -1,10 +1,12 @@
 import type { MetadataRoute } from "next";
+import { getTranslations } from "next-intl/server";
 
-export default function manifest(): MetadataRoute.Manifest {
+export default async function manifest(): Promise<MetadataRoute.Manifest> {
+  const t = await getTranslations("metadata");
   return {
-    name: "KMD's Workout",
-    short_name: "Workout",
-    description: "A no-frills workout tracker.",
+    name: t("title"),
+    short_name: t("shortName"),
+    description: t("description"),
     start_url: "/",
     display: "standalone",
     background_color: "#000000",

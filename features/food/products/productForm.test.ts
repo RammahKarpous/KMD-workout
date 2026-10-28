@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { productResultSummary } from "./copy";
 import {
   formFromLookup,
   parseNutrient,
   productQuery,
+  productSummary,
   validateProductForm,
   type ProductFormInput,
 } from "./productForm";
@@ -89,19 +89,23 @@ describe("formFromLookup", () => {
   });
 });
 
-describe("productResultSummary", () => {
-  it("describes an empty catalog, a search miss, and a page that can load more", () => {
-    expect(
-      productResultSummary({ query: "", count: 0, status: "ready", canLoadMore: false }),
-    ).toBe("No products yet.");
-    expect(
-      productResultSummary({ query: "oats", count: 0, status: "ready", canLoadMore: false }),
-    ).toBe('No products match "oats".');
-    expect(
-      productResultSummary({ query: "", count: 20, status: "ready", canLoadMore: true }),
-    ).toBe("Showing 20 products. More are available.");
-    expect(productResultSummary({ query: "", count: 0, status: "loading", canLoadMore: false })).toBe(
-      "Loading products.",
-    );
+describe("productSummary", () => {
+  it("picks a message key for an empty catalog, a search miss, and a longer page", () => {
+    expect(productSummary({ query: "", count: 0, status: "ready", canLoadMore: false })).toEqual({
+      key: "summaryEmpty",
+      values: {},
+    });
+    expect(productSummary({ query: "oats", count: 0, status: "ready", canLoadMore: false })).toEqual({
+      key: "summaryEmptySearch",
+      values: { query: "oats" },
+    });
+    expect(productSummary({ query: "", count: 20, status: "ready", canLoadMore: true })).toEqual({
+      key: "summaryCountMore",
+      values: { count: 20 },
+    });
+    expect(productSummary({ query: "", count: 0, status: "loading", canLoadMore: false })).toEqual({
+      key: "summaryLoading",
+      values: {},
+    });
   });
 });

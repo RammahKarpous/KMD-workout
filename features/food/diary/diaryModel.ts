@@ -14,14 +14,6 @@ import { toDateInputValue } from "@/shared/lib/date";
 import { RED_MEAT_COUNTED_DAYS, sumNutrients, weeklyRedMeatGrams, type Nutrients, type RedMeatEntry } from "@/shared/lib/nutrients";
 import { RED_MEAT_WEEKLY_GRAMS } from "@/shared/lib/goals";
 import { parseNutrient } from "@/features/food/products/productForm";
-import { DIARY_COPY } from "./copy";
-
-const WEEKDAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-const MONTHS = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December",
-];
-const MONTHS_SHORT = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 /** Today's calendar date in the user's local timezone, for the date picker. */
 export function localTodayIso(now: Date = new Date()): string {
@@ -41,25 +33,37 @@ export function adjacentDay(iso: string, direction: "previous" | "next"): string
   return addIsoDays(iso, direction === "next" ? 1 : -1);
 }
 
-/** Weekday is taken from the calendar date, not from the local offset of midnight UTC. */
-export function formatDiaryDate(iso: string): string {
+function utcDate(iso: string): Date {
   const { year, month, day } = parseIsoDate(iso);
-  const weekday = WEEKDAYS[new Date(Date.UTC(year, month - 1, day)).getUTCDay()];
-  return `${weekday} ${day} ${MONTHS[month - 1]} ${year}`;
+  return new Date(Date.UTC(year, month - 1, day));
 }
 
-export function formatShortDiaryDate(iso: string): string {
-  const { month, day } = parseIsoDate(iso);
-  return `${day} ${MONTHS_SHORT[month - 1]}`;
+/** Weekday comes from the calendar date, not from a timezone-shifted instant. */
+export function formatDiaryDate(iso: string, locale = "en"): string {
+  return new Intl.DateTimeFormat(locale, {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(utcDate(iso));
 }
 
-const WEEKDAYS_SHORT = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+export function formatShortDiaryDate(iso: string, locale = "en"): string {
+  return new Intl.DateTimeFormat(locale, {
+    day: "numeric",
+    month: "short",
+    timeZone: "UTC",
+  }).format(utcDate(iso));
+}
 
-/** "Wed 28 Oct", using the calendar date's weekday. */
-export function formatRangeDay(iso: string): string {
-  const { year, month, day } = parseIsoDate(iso);
-  const weekday = WEEKDAYS_SHORT[new Date(Date.UTC(year, month - 1, day)).getUTCDay()];
-  return `${weekday} ${formatShortDiaryDate(iso)}`;
+export function formatRangeDay(iso: string, locale = "en"): string {
+  return new Intl.DateTimeFormat(locale, {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    timeZone: "UTC",
+  }).format(utcDate(iso));
 }
 
 /** Monday through Friday of the week that contains `referenceDate`. */
@@ -93,32 +97,18 @@ export type LimitReadout = {
   over: boolean;
   atLimit: boolean;
   fillPercent: number;
-  detail: string;
-  valuetext: string;
+  overBy: number;
+  remaining: number;
 };
 
-/**
- * Equal to the limit is not over, matching the Laravel diary (`>`).
- * The words in `detail` carry the over-limit state; color is extra.
- */
-export function limitReadout(label: string, value: number, limit: number, unit: string): LimitReadout {
+/** Equal to the limit is not over, matching the Laravel diary (`>`). */
+export function limitReadout(value: number, limit: number): LimitReadout {
   const over = limit <= 0 ? value > 0 : value > limit;
   const atLimit = !over && value === limit;
   const overBy = over ? Math.round((value - Math.max(limit, 0)) * 100) / 100 : 0;
-  const remaining = over ? 0 : Math.round((limit - value) * 100) / 100;
-  const detail = over
-    ? DIARY_COPY.overBy(formatDiaryNumber(overBy), unit)
-    : atLimit
-      ? DIARY_COPY.atLimit
-      : DIARY_COPY.remaining(formatDiaryNumber(remaining), unit);
+  const remaining = over || atLimit ? 0 : Math.round(Math.max(0, limit - value) * 100) / 100;
   const fillPercent = limit > 0 ? Math.min(100, (value / limit) * 100) : value > 0 ? 100 : 0;
-  return {
-    over,
-    atLimit,
-    fillPercent,
-    detail,
-    valuetext: DIARY_COPY.meterText(label, formatDiaryNumber(value), formatDiaryNumber(Math.max(limit, 0)), unit, detail),
-  };
+  return { over, atLimit, fillPercent, overBy, remaining };
 }
 
 export type MomentGroup<T extends { moment: FoodMoment; totals: Nutrients }> = {
@@ -140,9 +130,9 @@ export function groupEntriesByMoment<T extends { moment: FoodMoment; totals: Nut
 
 export function entryAmountText(entry: { category?: string; grams?: number; ml?: number }): string {
   if (portionKind(entry.category ?? "") === "ml") {
-    return `${formatDiaryNumber(entry.ml ?? 0)} ${DIARY_COPY.unitMl}`;
+    return `${formatDiaryNumber(entry.ml ?? 0)} ml`;
   }
-  return `${formatDiaryNumber(entry.grams ?? 0)} ${DIARY_COPY.unitGrams}`;
+  return `${formatDiaryNumber(entry.grams ?? 0)} g`;
 }
 
 export type EntryFormInput = {
@@ -173,16 +163,16 @@ const entryFormSchema = z
   })
   .superRefine((value, ctx) => {
     if (!isMoment(value.moment)) {
-      ctx.addIssue({ code: "custom", path: ["moment"], message: DIARY_COPY.momentRequired });
+      ctx.addIssue({ code: "custom", path: ["moment"], message: "momentRequired" });
     }
     if (!isCategory(value.category)) {
-      ctx.addIssue({ code: "custom", path: ["category"], message: DIARY_COPY.categoryRequired });
+      ctx.addIssue({ code: "custom", path: ["category"], message: "categoryRequired" });
     }
     if (parsePortion(value.amount) === undefined) {
-      ctx.addIssue({ code: "custom", path: ["amount"], message: DIARY_COPY.amountInvalid });
+      ctx.addIssue({ code: "custom", path: ["amount"], message: "amountInvalid" });
     }
     if (!value.productId) {
-      ctx.addIssue({ code: "custom", path: ["productId"], message: DIARY_COPY.productRequired });
+      ctx.addIssue({ code: "custom", path: ["productId"], message: "productRequired" });
     }
   });
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation } from "convex/react";
+import { useTranslations } from "next-intl";
 import { api } from "@/convex/_generated/api";
 import type { Doc } from "@/convex/_generated/dataModel";
 import { useSheet } from "@/shared/ui/SheetHost";
@@ -15,6 +16,7 @@ export function FolderRow({
   routines: Doc<"routines">[];
 }) {
   const { push } = useSheet();
+  const t = useTranslations("workout");
   const updateFolder = useMutation(api.workout.updateFolder);
   const open = !folder.collapsed;
 
@@ -45,7 +47,7 @@ export function FolderRow({
             push("folder-editor", <FolderEditorSheet existing={folder} />);
           }}
           className="px-1 text-lg leading-none text-muted-2"
-          aria-label="Folder options"
+          aria-label={t("folderOptions")}
         >
           ⋮
         </button>
@@ -54,8 +56,7 @@ export function FolderRow({
         <div className="p-3">
           {routines.length === 0 ? (
             <div className="px-1 py-0.5 text-[13px] leading-snug text-muted-2">
-              Empty folder. Create a routine and set its folder to &ldquo;
-              {folder.name}&rdquo;.
+              {t("emptyFolder", { name: folder.name })}
             </div>
           ) : (
             <div className="lg:grid lg:grid-cols-2 lg:gap-3">

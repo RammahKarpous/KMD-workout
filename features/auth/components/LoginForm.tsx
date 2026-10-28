@@ -1,11 +1,13 @@
 "use client";
 
 import { useAuthActions } from "@convex-dev/auth/react";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 export function LoginForm() {
   const { signIn } = useAuthActions();
+  const t = useTranslations("auth");
   const router = useRouter();
   const [flow, setFlow] = useState<"signIn" | "signUp">("signIn");
   const [error, setError] = useState<string | null>(null);
@@ -31,18 +33,14 @@ export function LoginForm() {
             router.replace("/");
           })
           .catch(() => {
-            setError(
-              flow === "signIn"
-                ? "Invalid email or password."
-                : "Could not create account. Try a different email."
-            );
+            setError(flow === "signIn" ? t("invalid") : t("createFailed"));
           })
           .finally(() => setSubmitting(false));
       }}
     >
       <div className="flex flex-col gap-1.5">
         <label className="text-[12.5px] font-semibold text-muted" htmlFor="email">
-          Email
+          {t("email")}
         </label>
         <input
           id="email"
@@ -55,7 +53,7 @@ export function LoginForm() {
       </div>
       <div className="flex flex-col gap-1.5">
         <label className="text-[12.5px] font-semibold text-muted" htmlFor="password">
-          Password
+          {t("password")}
         </label>
         <input
           id="password"
@@ -72,16 +70,14 @@ export function LoginForm() {
         disabled={submitting}
         className="w-full rounded-2xl bg-blue py-4 text-[15.5px] font-bold text-white disabled:opacity-40"
       >
-        {flow === "signIn" ? "Sign in" : "Create account"}
+        {flow === "signIn" ? t("signIn") : t("createAccount")}
       </button>
       <button
         type="button"
         onClick={() => setFlow(flow === "signIn" ? "signUp" : "signIn")}
         className="text-[13.5px] font-semibold text-blue"
       >
-        {flow === "signIn"
-          ? "New here? Create an account"
-          : "Already have an account? Sign in"}
+        {flow === "signIn" ? t("switchToSignUp") : t("switchToSignIn")}
       </button>
     </form>
   );

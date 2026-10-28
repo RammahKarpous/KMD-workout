@@ -37,8 +37,9 @@ describe("diary dates", () => {
   });
 
   it("formats the weekday of the calendar date", () => {
-    expect(formatDiaryDate("2026-10-28")).toBe("Wednesday 28 October 2026");
-    expect(formatRangeDay("2026-10-28")).toBe("Wed 28 Oct");
+    expect(formatDiaryDate("2026-10-28", "en")).toBe("Wednesday, October 28, 2026");
+    expect(formatDiaryDate("2026-10-28", "nl")).toBe("woensdag 28 oktober 2026");
+    expect(formatRangeDay("2026-10-28", "en")).toBe("Wed, Oct 28");
   });
 
   it("uses Monday to Friday for the red-meat week", () => {
@@ -79,12 +80,11 @@ describe("groupEntriesByMoment", () => {
 
 describe("limitReadout", () => {
   it("treats the limit itself as not over, and names the overflow", () => {
-    expect(limitReadout("Calories", 2000, 2000, "kcal").over).toBe(false);
-    expect(limitReadout("Calories", 2000, 2000, "kcal").detail).toBe("At the limit");
-    const over = limitReadout("Fat", 62.5, 50, "g");
+    expect(limitReadout(2000, 2000).over).toBe(false);
+    expect(limitReadout(2000, 2000).atLimit).toBe(true);
+    const over = limitReadout(62.5, 50);
     expect(over.over).toBe(true);
-    expect(over.detail).toBe("Over by 12.5 g");
-    expect(over.valuetext).toContain("Over by 12.5 g");
+    expect(over.overBy).toBe(12.5);
     expect(over.fillPercent).toBe(100);
   });
 });

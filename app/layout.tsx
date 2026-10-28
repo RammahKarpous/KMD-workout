@@ -1,6 +1,9 @@
 import type { Metadata, Viewport } from "next";
 import { ConvexAuthNextjsServerProvider } from "@convex-dev/auth/nextjs/server";
 import { Geist, Geist_Mono } from "next/font/google";
+import { NextIntlClientProvider } from "next-intl";
+import { getLocale, getMessages, getTranslations } from "next-intl/server";
+import { LanguageSwitcher } from "@/features/i18n/LanguageSwitcher";
 import { ActiveWorkoutProvider } from "@/features/logging/context/ActiveWorkoutContext";
 import { BottomNav } from "@/shared/ui/BottomNav";
 import { ConvexClientProvider } from "@/shared/ui/ConvexClientProvider";
@@ -20,14 +23,17 @@ const geistMono = Geist_Mono({
 	subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-	title: "KMD's Workout",
-	description: "A no-frills workout tracker.",
-	appleWebApp: {
-		title: "Workout",
-		statusBarStyle: "black-translucent",
-	},
-};
+export async function generateMetadata(): Promise<Metadata> {
+	const t = await getTranslations("metadata");
+	return {
+		title: t("title"),
+		description: t("description"),
+		appleWebApp: {
+			title: t("shortName"),
+			statusBarStyle: "black-translucent",
+		},
+	};
+}
 
 export const viewport: Viewport = {
 	themeColor: "#000000",
@@ -39,31 +45,37 @@ export const viewport: Viewport = {
 	userScalable: false,
 };
 
-export default function RootLayout({
+export default async function RootLayout({
 	children,
 }: Readonly<{
 	children: React.ReactNode;
 }>) {
+	const locale = await getLocale();
+	const messages = await getMessages();
+
 	return (
 		<ConvexAuthNextjsServerProvider>
 			<html
-				lang="en"
+				lang={locale}
 				className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
 			>
 				<body className="min-h-full bg-bg text-ink">
-					<ServiceWorkerRegister />
-					<DisableZoom />
-					<InstallPrompt />
-					<ConvexClientProvider>
-						<SheetHost>
-							<ActiveWorkoutProvider>
-								<div className="mx-auto w-full max-w-130 px-4.5 pt-5 pb-30 md:max-w-180 lg:max-w-250 xl:max-w-280">
-									{children}
-								</div>
-								<BottomNav />
-							</ActiveWorkoutProvider>
-						</SheetHost>
-					</ConvexClientProvider>
+					<NextIntlClientProvider locale={locale} messages={messages}>
+						<ServiceWorkerRegister />
+						<DisableZoom />
+						<InstallPrompt />
+						<ConvexClientProvider>
+							<SheetHost>
+								<ActiveWorkoutProvider>
+									<div className="mx-auto w-full max-w-130 px-4.5 pt-5 pb-30 md:max-w-180 lg:max-w-250 xl:max-w-280">
+										<LanguageSwitcher />
+										{children}
+									</div>
+									<BottomNav />
+								</ActiveWorkoutProvider>
+							</SheetHost>
+						</ConvexClientProvider>
+					</NextIntlClientProvider>
 				</body>
 			</html>
 		</ConvexAuthNextjsServerProvider>

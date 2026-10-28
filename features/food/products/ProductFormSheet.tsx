@@ -1,6 +1,7 @@
 "use client";
 
 import { useAction, useMutation } from "convex/react";
+import { useTranslations } from "next-intl";
 import dynamic from "next/dynamic";
 import { useId, useRef, useState, type ReactNode } from "react";
 import { api } from "@/convex/_generated/api";
@@ -9,25 +10,25 @@ import type { Nutrients } from "@/shared/lib/nutrients";
 import { SheetHeader } from "@/shared/ui/SheetHeader";
 import { useSheet } from "@/shared/ui/SheetHost";
 import { useFocusTrap } from "@/shared/ui/useFocusTrap";
-import { PRODUCTS_COPY } from "./copy";
 import { FIELD_CLASS, FOCUS_RING } from "./focus";
 import {
   NUTRIENT_FIELD_KEYS,
   emptyProductForm,
   formFromLookup,
   formFromProduct,
-  nutrientLabel,
   validateProductForm,
   type NutrientFieldKey,
   type ProductFormInput,
 } from "./productForm";
 
+function ScannerLoading() {
+  const t = useTranslations("food.products");
+  return <p className="text-sm text-muted">{t("cameraStarting")}</p>;
+}
+
 const BarcodeScanner = dynamic(
   () => import("./BarcodeScanner").then((mod) => mod.BarcodeScanner),
-  {
-    ssr: false,
-    loading: () => <p className="text-sm text-muted">{PRODUCTS_COPY.cameraStarting}</p>,
-  },
+  { ssr: false, loading: () => <ScannerLoading /> },
 );
 
 type ExistingProduct = {
@@ -44,6 +45,8 @@ export function ProductFormSheet({
   existing?: ExistingProduct | null;
   onSaved: (message: string) => void;
 }) {
+  const t = useTranslations("food.products");
+  const nutrients = useTranslations("food.nutrients");
   const { pop } = useSheet();
   const createProduct = useMutation(api.foodProducts.create);
   const updateProduct = useMutation(api.foodProducts.update);
@@ -88,18 +91,18 @@ export function ProductFormSheet({
           per100g: result.value.per100g,
           barcode: result.value.barcode ?? null,
         });
-        onSaved(PRODUCTS_COPY.updated);
+        onSaved(t("updated"));
       } else {
         await createProduct({
           name: result.value.name,
           per100g: result.value.per100g,
           ...(result.value.barcode ? { barcode: result.value.barcode } : {}),
         });
-        onSaved(PRODUCTS_COPY.added);
+        onSaved(t("added"));
       }
       pop();
     } catch (error) {
-      setFormError(error instanceof Error ? error.message : PRODUCTS_COPY.saveFailed);
+      setFormError(error instanceof Error ? error.message : t("saveFailed"));
     } finally {
       setSaving(false);
     }
@@ -112,7 +115,7 @@ export function ProductFormSheet({
     try {
       const found = await lookup({ barcode: code });
       if (!found) {
-        setScanError(PRODUCTS_COPY.notFound(code));
+        setScanError(t("notFound", { barcode: code }));
         return;
       }
       const digits = code.replace(/\D/g, "");
@@ -120,7 +123,7 @@ export function ProductFormSheet({
       setErrors({});
       setScanning(false);
     } catch (error) {
-      setScanError(error instanceof Error ? error.message : PRODUCTS_COPY.lookupFailed);
+      setScanError(error instanceof Error ? error.message : t("lookupFailed"));
     } finally {
       setLookingUp(false);
     }
@@ -143,7 +146,7 @@ export function ProductFormSheet({
     >
       <SheetHeader
         titleId={titleId}
-        title={existing ? PRODUCTS_COPY.editTitle : PRODUCTS_COPY.createTitle}
+        title={existing ? t("editTitle") : t("createTitle")}
         onClose={() => (scanning ? setScanning(false) : pop())}
         closeIcon={scanning ? "back" : "x"}
       />
@@ -153,7 +156,7 @@ export function ProductFormSheet({
           busy={lookingUp}
           error={scanError}
           onCode={(code) => void lookupCode(code)}
-          onCameraError={() => setScanError(PRODUCTS_COPY.cameraFailed)}
+          onCameraError={() => setScanError(t("cameraFailed"))}
           onClose={() => setScanning(false)}
           onRetry={() => setScanError(null)}
         />
@@ -168,15 +171,15 @@ export function ProductFormSheet({
         >
           <Field
             id={fieldDomId("name")}
-            label={PRODUCTS_COPY.nameLabel}
-            error={errors.name}
+            label={t("nameLabel")}
+            error={errors.name ? t(errors.name) : undefined}
           >
             <input
               id={fieldDomId("name")}
               data-autofocus
               value={form.name}
               onChange={(event) => setField("name", event.target.value)}
-              placeholder={PRODUCTS_COPY.namePlaceholder}
+              placeholder={t("namePlaceholder")}
               autoComplete="off"
               aria-invalid={errors.name ? true : undefined}
               aria-describedby={errors.name ? errorId("name") : undefined}
@@ -186,11 +189,11 @@ export function ProductFormSheet({
 
           <fieldset className="flex flex-col gap-3">
             <legend className="mb-1 text-[12.5px] font-semibold text-muted">
-              {PRODUCTS_COPY.per100gLegend}
+              {t("per100gLegend")}
             </legend>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               {NUTRIENT_FIELD_KEYS.map((key) => (
-                <Field key={key} id={fieldDomId(key)} label={nutrientLabel(key)} error={errors[key]}>
+                <Field key={key} id={fieldDomId(key)} label={nutrients(key)} error={errors[key] ? t(errors[key]) : undefined}>
                   <input
                     id={fieldDomId(key)}
                     inputMode="decimal"
@@ -208,9 +211,9 @@ export function ProductFormSheet({
 
           <Field
             id={fieldDomId("barcode")}
-            label={PRODUCTS_COPY.barcodeLabel}
-            hint={PRODUCTS_COPY.barcodeHint}
-            error={errors.barcode}
+            label={t("barcodeLabel")}
+            hint={t("barcodeHint")}
+            error={errors.barcode ? t(errors.barcode) : undefined}
           >
             <input
               id={fieldDomId("barcode")}
@@ -219,7 +222,7 @@ export function ProductFormSheet({
               spellCheck={false}
               value={form.barcode}
               onChange={(event) => setField("barcode", event.target.value)}
-              placeholder={PRODUCTS_COPY.barcodePlaceholder}
+              placeholder={t("barcodePlaceholder")}
               aria-invalid={errors.barcode ? true : undefined}
               aria-describedby={describedBy("barcode", Boolean(errors.barcode), true)}
               className={FIELD_CLASS}
@@ -240,14 +243,14 @@ export function ProductFormSheet({
             }}
             className={`rounded-xl border border-line bg-surface py-3 text-sm font-bold text-ink ${FOCUS_RING}`}
           >
-            {PRODUCTS_COPY.scan}
+            {t("scan")}
           </button>
           <button
             type="submit"
             disabled={saving}
             className={`rounded-2xl bg-blue py-4 text-[15.5px] font-bold text-black disabled:opacity-60 ${FOCUS_RING}`}
           >
-            {existing ? PRODUCTS_COPY.saveEdit : PRODUCTS_COPY.saveCreate}
+            {existing ? t("saveEdit") : t("saveCreate")}
           </button>
         </form>
       )}

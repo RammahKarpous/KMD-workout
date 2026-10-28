@@ -2,7 +2,6 @@ import { z } from "zod";
 import { DEFAULT_NUTRITION_LIMITS } from "@/shared/lib/goals";
 import { NUTRIENT_KEYS, type NutrientKey, type Nutrients } from "@/shared/lib/nutrients";
 import { parseNutrient } from "@/features/food/products/productForm";
-import { LIMITS_COPY } from "./copy";
 
 export type LimitsFormInput = Record<NutrientKey, string>;
 
@@ -11,7 +10,7 @@ export type LimitsFieldErrors = Partial<Record<NutrientKey, string>>;
 const limitField = z
   .string()
   .trim()
-  .refine((value) => parseNutrient(value) !== undefined, LIMITS_COPY.invalid)
+  .refine((value) => parseNutrient(value) !== undefined, "invalid")
   .transform((value) => parseNutrient(value) ?? 0);
 
 export const limitsFormSchema = z.object({
@@ -51,25 +50,25 @@ export function validateLimitsForm(
   return { ok: true, value: parsed.data };
 }
 
-export function defaultsHint(): string {
+export function defaultLimitValues(): Record<NutrientKey, string> {
   const defaults = DEFAULT_NUTRITION_LIMITS;
-  return LIMITS_COPY.defaultsHint(
-    String(defaults.kcal),
-    String(defaults.fat),
-    String(defaults.saturatedFat),
-    String(defaults.carbs),
-    String(defaults.sugar),
-    String(defaults.protein),
-  );
+  return {
+    kcal: String(defaults.kcal),
+    fat: String(defaults.fat),
+    saturatedFat: String(defaults.saturatedFat),
+    carbs: String(defaults.carbs),
+    sugar: String(defaults.sugar),
+    protein: String(defaults.protein),
+  };
 }
 
-export const LIMIT_FIELDS: { key: NutrientKey; label: string }[] = [
-  { key: "kcal", label: LIMITS_COPY.calories },
-  { key: "fat", label: LIMITS_COPY.fat },
-  { key: "saturatedFat", label: LIMITS_COPY.saturatedFat },
-  { key: "carbs", label: LIMITS_COPY.carbs },
-  { key: "sugar", label: LIMITS_COPY.sugar },
-  { key: "protein", label: LIMITS_COPY.protein },
+export const LIMIT_FIELD_KEYS: NutrientKey[] = [
+  "kcal",
+  "fat",
+  "saturatedFat",
+  "carbs",
+  "sugar",
+  "protein",
 ];
 
 function isNutrientKey(key: string): key is NutrientKey {

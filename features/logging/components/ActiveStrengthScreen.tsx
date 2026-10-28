@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation, useQuery } from "convex/react";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
@@ -47,6 +48,7 @@ export function ActiveStrengthScreen({
   startTs: number;
 }) {
   const { push, pop } = useSheet();
+  const t = useTranslations("logging");
   const { minimize, end } = useActiveWorkout();
   const finishStrengthSession = useMutation(api.logging.finishStrengthSession);
   const updateSessionNotes = useMutation(api.logging.updateSessionNotes);
@@ -150,11 +152,11 @@ export function ActiveStrengthScreen({
 
     return (
       <WorkoutSummaryScreen
-        title={routineName ?? "Workout"}
+        title={routineName ?? t("defaultTitle")}
         stats={[
-          { label: "Duration", value: formatDuration(finishedDurationSec), accent: true },
-          { label: "Volume", value: `${Math.round(volume * 10) / 10} kg` },
-          { label: "Sets", value: `${setCount}` },
+          { label: t("duration"), value: formatDuration(finishedDurationSec), accent: true },
+          { label: t("volume"), value: t("volumeKg", { amount: Math.round(volume * 10) / 10 }) },
+          { label: t("sets"), value: `${setCount}` },
         ]}
         muscleSection={
           hasMuscleData ? (
@@ -172,14 +174,14 @@ export function ActiveStrengthScreen({
   return (
     <div className="p-4">
       <SheetHeader
-        title={routineName ?? "Workout"}
+        title={routineName ?? t("defaultTitle")}
         onClose={end}
         right={
           <>
             <button
               type="button"
               onClick={minimize}
-              aria-label="Minimize workout"
+              aria-label={t("minimize")}
               className="flex items-center justify-center p-1.5 text-ink"
             >
               <ChevronDownIcon />
@@ -190,7 +192,7 @@ export function ActiveStrengthScreen({
               disabled={finishing}
               className="text-[15px] font-bold text-blue disabled:opacity-50"
             >
-              Finish
+              {t("finish")}
             </button>
           </>
         }
@@ -200,9 +202,9 @@ export function ActiveStrengthScreen({
       {exercises.length === 0 && (
         <div className="py-8 text-center text-[14px] text-muted-2">
           <span className="mb-1.5 block text-lg font-bold text-muted">
-            No exercises yet.
+            {t("noExercises")}
           </span>
-          Add one to get started.
+          {t("addOne")}
         </div>
       )}
 
@@ -223,12 +225,12 @@ export function ActiveStrengthScreen({
         onClick={openPicker}
         className="w-full rounded-2xl bg-surface py-4 text-[15.5px] font-bold text-blue"
       >
-        + Add exercise
+        {t("addExercise")}
       </button>
 
       <ConfirmDialog
         open={confirmFinish}
-        message="Some sets aren't checked off, or are missing a weight or rep count. Finish anyway?"
+        message={t("finishAnyway")}
         onCancel={() => setConfirmFinish(false)}
         onConfirm={() => {
           setConfirmFinish(false);
