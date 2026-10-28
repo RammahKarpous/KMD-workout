@@ -10,10 +10,15 @@
 
 import type * as auth from "../auth.js";
 import type * as exercises from "../exercises.js";
+import type * as foodEntries from "../foodEntries.js";
+import type * as foodProducts from "../foodProducts.js";
 import type * as http from "../http.js";
 import type * as lib_auth from "../lib/auth.js";
+import type * as lib_food from "../lib/food.js";
 import type * as logging from "../logging.js";
 import type * as measurements from "../measurements.js";
+import type * as nutritionLimits from "../nutritionLimits.js";
+import type * as openFoodFacts from "../openFoodFacts.js";
 import type * as profile from "../profile.js";
 import type * as progress from "../progress.js";
 import type * as stats from "../stats.js";
@@ -28,10 +33,15 @@ import type {
 declare const fullApi: ApiFromModules<{
   auth: typeof auth;
   exercises: typeof exercises;
+  foodEntries: typeof foodEntries;
+  foodProducts: typeof foodProducts;
   http: typeof http;
   "lib/auth": typeof lib_auth;
+  "lib/food": typeof lib_food;
   logging: typeof logging;
   measurements: typeof measurements;
+  nutritionLimits: typeof nutritionLimits;
+  openFoodFacts: typeof openFoodFacts;
   profile: typeof profile;
   progress: typeof progress;
   stats: typeof stats;
