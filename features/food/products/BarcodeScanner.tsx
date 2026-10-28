@@ -1,8 +1,8 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useEffect, useId, useRef, useState } from "react";
 import type { Html5Qrcode } from "html5-qrcode";
-import { PRODUCTS_COPY } from "./copy";
 import { FIELD_CLASS, FOCUS_RING } from "./focus";
 
 /**
@@ -25,6 +25,7 @@ export function BarcodeScanner({
   onClose: () => void;
   onRetry: () => void;
 }) {
+  const t = useTranslations("food.products");
   const readerId = useId().replace(/:/g, "");
   const manualId = `${readerId}-manual`;
   const manualRef = useRef<HTMLInputElement>(null);
@@ -89,7 +90,7 @@ export function BarcodeScanner({
     <div className="flex flex-col gap-3">
       <div
         id={readerId}
-        aria-label={PRODUCTS_COPY.scanTitle}
+        aria-label={t("scanTitle")}
         className="min-h-48 overflow-hidden rounded-xl bg-black [&_video]:w-full"
       />
       {error ? (
@@ -108,7 +109,7 @@ export function BarcodeScanner({
         }}
       >
         <label htmlFor={manualId} className="text-[12.5px] font-semibold text-muted">
-          {PRODUCTS_COPY.manualLabel}
+          {t("manualLabel")}
         </label>
         <div className="flex gap-2">
           <input
@@ -118,7 +119,7 @@ export function BarcodeScanner({
             inputMode="numeric"
             autoComplete="off"
             spellCheck={false}
-            placeholder={PRODUCTS_COPY.manualPlaceholder}
+            placeholder={t("manualPlaceholder")}
             className={FIELD_CLASS}
           />
           <button
@@ -126,7 +127,7 @@ export function BarcodeScanner({
             disabled={busy}
             className={`shrink-0 rounded-xl bg-blue px-4 text-sm font-bold text-black disabled:opacity-60 ${FOCUS_RING}`}
           >
-            {busy ? PRODUCTS_COPY.lookingUp : PRODUCTS_COPY.lookup}
+            {busy ? t("lookingUp") : t("lookup")}
           </button>
         </div>
       </form>
@@ -139,14 +140,14 @@ export function BarcodeScanner({
         }}
         className={`rounded-xl bg-surface-2 py-3 text-sm font-bold text-ink ${FOCUS_RING}`}
       >
-        {PRODUCTS_COPY.scanAgain}
+        {t("scanAgain")}
       </button>
       <button
         type="button"
         onClick={onClose}
         className={`rounded-xl py-3 text-sm font-bold text-muted ${FOCUS_RING}`}
       >
-        {PRODUCTS_COPY.closeScanner}
+        {t("closeScanner")}
       </button>
     </div>
   );

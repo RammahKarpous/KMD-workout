@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { DEFAULT_NUTRITION_LIMITS } from "@/shared/lib/goals";
-import { defaultsHint, formFromLimits, validateLimitsForm } from "./limitsForm";
+import { defaultLimitValues, formFromLimits, validateLimitsForm } from "./limitsForm";
 
 describe("validateLimitsForm", () => {
   it("accepts comma decimals and zero", () => {
@@ -29,9 +29,9 @@ describe("validateLimitsForm", () => {
   });
 });
 
-describe("defaultsHint", () => {
+describe("defaultLimitValues", () => {
   it("names the suggested defaults", () => {
-    expect(defaultsHint()).toContain("2000 kcal");
-    expect(defaultsHint()).toContain("130 g protein");
+    expect(defaultLimitValues().kcal).toBe("2000");
+    expect(defaultLimitValues().protein).toBe("130");
   });
 });

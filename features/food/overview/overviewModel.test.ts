@@ -19,8 +19,9 @@ describe("periodRange", () => {
   });
 
   it("labels a week by its dates and a month by its name", () => {
-    expect(formatPeriodLabel("2026-10-28", "week")).toBe("26 Oct – 1 Nov");
-    expect(formatPeriodLabel("2026-10-28", "month")).toBe("October 2026");
+    expect(formatPeriodLabel("2026-10-28", "week", "en")).toBe("Oct 26 – Nov 1");
+    expect(formatPeriodLabel("2026-10-28", "month", "en")).toBe("October 2026");
+    expect(formatPeriodLabel("2026-10-28", "month", "nl")).toBe("oktober 2026");
   });
 });
 

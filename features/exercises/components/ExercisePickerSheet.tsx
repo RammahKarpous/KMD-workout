@@ -9,6 +9,7 @@
  */
 
 import { useMutation, useQuery } from "convex/react";
+import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import { api } from "@/convex/_generated/api";
 import { SheetHeader } from "@/shared/ui/SheetHeader";
@@ -22,6 +23,9 @@ export function ExercisePickerSheet({
   onPick: (exercise: { name: string; cardio: boolean }) => void;
 }) {
   const { pop } = useSheet();
+  const t = useTranslations("exercises");
+  const muscles = useTranslations("muscles");
+  const groups = useTranslations("libraryGroups");
   const customExercises = useQuery(api.exercises.listCustomExercises) ?? [];
   const createCustomExercise = useMutation(api.exercises.createCustomExercise);
 
@@ -51,13 +55,12 @@ export function ExercisePickerSheet({
     return (
       <div className="p-4">
         <SheetHeader
-          title="Muscle group"
+          title={t("muscleGroup")}
           onClose={() => setPendingName(null)}
           closeIcon="back"
         />
         <p className="mb-4 px-0.5 text-sm leading-snug text-muted">
-          Which muscle group does &ldquo;{pendingName}&rdquo; mainly train? This
-          lets it count toward that muscle in your stats later.
+          {t("customMusclePrompt", { name: pendingName })}
         </p>
         <div className="mb-4">
           {MUSCLE_GROUPS.map((m) => (
@@ -73,7 +76,7 @@ export function ExercisePickerSheet({
               }}
               className="mb-2 w-full rounded-xl border border-line bg-surface px-3.25 py-2.5 text-left text-[15px] font-medium text-ink"
             >
-              {m.label}
+              {muscles(m.id as "chest")}
             </button>
           ))}
         </div>
@@ -93,10 +96,10 @@ export function ExercisePickerSheet({
 
   return (
     <div className="p-4">
-      <SheetHeader title="Add exercise" onClose={pop} />
+      <SheetHeader title={t("add")} onClose={pop} />
       <input
         autoFocus
-        placeholder="Search exercises…"
+        placeholder={t("search")}
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         className="mb-3.5 w-full rounded-xl border border-line bg-surface px-3.5 py-3 text-base text-ink outline-none focus:border-blue"
@@ -105,11 +108,11 @@ export function ExercisePickerSheet({
       {q === "" ? (
         <div>
           {Object.entries(LIBRARY).map(([group, names]) => (
-            <PickerGroup key={group} label={group} names={names} onPick={pick} />
+            <PickerGroup key={group} label={groups(group as "Chest")} names={names} onPick={pick} />
           ))}
-          <PickerGroup label="Cardio" names={CARDIO} onPick={pick} />
+          <PickerGroup label={groups("Cardio")} names={CARDIO} onPick={pick} />
           {customNames.length > 0 && (
-            <PickerGroup label="Custom" names={customNames} custom onPick={pick} />
+            <PickerGroup label={groups("Custom")} names={customNames} custom onPick={pick} />
           )}
         </div>
       ) : (
@@ -129,7 +132,7 @@ export function ExercisePickerSheet({
               className="mb-2 w-full rounded-xl border border-line bg-surface px-3.25 py-2.5 text-left"
             >
               <span className="text-[13.5px] font-bold text-blue">
-                + Add &ldquo;{query.trim()}&rdquo;
+                {t("addNamed", { name: query.trim() })}
               </span>
             </button>
           )}
@@ -171,6 +174,9 @@ function PickerItem({
   custom?: boolean;
   onClick: () => void;
 }) {
+  const t = useTranslations("exercises");
+  const cardio = useTranslations("cardio");
+  const label = (CARDIO as readonly string[]).includes(name) ? cardio(name as "Walking") : name;
   return (
     <button
       type="button"
@@ -179,11 +185,11 @@ function PickerItem({
     >
       <ExerciseThumb name={name} />
       <span className="min-w-0 flex-1 text-[15px] font-medium text-ink">
-        {name}
+        {label}
       </span>
       {custom && (
         <span className="rounded-md bg-surface-2 px-2.5 py-0.5 text-[11px] font-bold text-muted">
-          Custom
+          {t("custom")}
         </span>
       )}
     </button>

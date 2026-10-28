@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
-import { OVERVIEW_COPY } from "@/features/food/overview/copy";
+import { getTranslations } from "next-intl/server";
 import { OverviewScreen } from "@/features/food/overview/OverviewScreen";
 
-export const metadata: Metadata = {
-  title: OVERVIEW_COPY.pageTitle,
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("food.overview");
+  return { title: t("pageTitle") };
+}
 
 export default function FoodOverviewPage() {
   return <OverviewScreen />;

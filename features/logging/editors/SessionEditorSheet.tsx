@@ -1,12 +1,14 @@
 "use client";
 
 import { useMutation } from "convex/react";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { api } from "@/convex/_generated/api";
 import type { Doc } from "@/convex/_generated/dataModel";
 import { ExerciseDetailTabs } from "@/features/exercises/components/ExerciseDetailTabs";
 import { ExercisePickerSheet } from "@/features/exercises/components/ExercisePickerSheet";
 import { CARDIO } from "@/features/exercises/library/library";
+import { intensityKey } from "@/features/logging/intensity";
 import { AlertDialog } from "@/shared/ui/AlertDialog";
 import { Chip } from "@/shared/ui/Chip";
 import { SetBlock, type DraftExercise, type DraftSet } from "@/shared/ui/SetBlock";
@@ -25,6 +27,9 @@ function hasValue(s: DraftSet): boolean {
  * inserting a new session. */
 export function SessionEditorSheet({ session }: { session: Doc<"sessions"> }) {
   const { push, pop } = useSheet();
+  const t = useTranslations("logging");
+  const cardioLabel = useTranslations("cardio");
+  const intensityLabel = useTranslations("intensity");
   const updateStrengthSession = useMutation(api.logging.updateStrengthSession);
   const updateCardioSession = useMutation(api.logging.updateCardioSession);
 
@@ -68,7 +73,7 @@ export function SessionEditorSheet({ session }: { session: Doc<"sessions"> }) {
           .map((ex) => ({ ...ex, sets: ex.sets.filter(hasValue) }))
           .filter((ex) => ex.sets.length > 0);
         if (cleaned.length === 0) {
-          setAlert("Add at least one set.");
+          setAlert(t("addSet"));
           return;
         }
         await updateStrengthSession({ id: session._id, exercises: cleaned, notes });
@@ -89,16 +94,16 @@ export function SessionEditorSheet({ session }: { session: Doc<"sessions"> }) {
 
   return (
     <div className="p-4">
-      <SheetHeader title="Edit workout" onClose={pop} />
+      <SheetHeader title={t("editWorkout")} onClose={pop} />
 
       {session.type === "strength" ? (
         <>
           {exercises.length === 0 && (
             <div className="py-8 text-center text-[14px] text-muted-2">
               <span className="mb-1.5 block text-lg font-bold text-muted">
-                No exercises yet.
+                {t("noExercises")}
               </span>
-              Add one to get started.
+              {t("addOne")}
             </div>
           )}
 
@@ -120,19 +125,19 @@ export function SessionEditorSheet({ session }: { session: Doc<"sessions"> }) {
             onClick={openPicker}
             className="w-full rounded-2xl bg-surface py-4 text-[15.5px] font-bold text-blue"
           >
-            + Add exercise
+            {t("addExercise")}
           </button>
         </>
       ) : (
         <>
           <div className="mb-4">
             <label className="mb-2 block text-[12.5px] font-semibold text-muted">
-              What are you doing?
+              {t("whatDoing")}
             </label>
             <div className="flex flex-wrap gap-2">
               {CARDIO.map((c) => (
                 <Chip key={c} active={c === cardioType} onClick={() => setCardioType(c)}>
-                  {c}
+                  {cardioLabel(c as "Walking")}
                 </Chip>
               ))}
             </div>
@@ -140,7 +145,7 @@ export function SessionEditorSheet({ session }: { session: Doc<"sessions"> }) {
 
           <div className="mb-4">
             <label className="mb-1.5 block text-[12.5px] font-semibold text-muted">
-              Duration (minutes)
+              {t("durationMinutes")}
             </label>
             <input
               type="number"
@@ -154,12 +159,12 @@ export function SessionEditorSheet({ session }: { session: Doc<"sessions"> }) {
 
           <div className="mb-4">
             <label className="mb-2 block text-[12.5px] font-semibold text-muted">
-              Intensity
+              {t("intensity")}
             </label>
             <div className="flex flex-wrap gap-2">
               {INTENSITIES.map((l) => (
                 <Chip key={l} small active={l === intensity} onClick={() => setIntensity(l)}>
-                  {l}
+                  {intensityLabel(intensityKey(l))}
                 </Chip>
               ))}
             </div>
@@ -169,10 +174,10 @@ export function SessionEditorSheet({ session }: { session: Doc<"sessions"> }) {
 
       <div className="mt-2 mb-4">
         <label className="mb-1.5 block text-[12.5px] font-semibold text-muted">
-          Note (optional)
+          {t("noteOptional")}
         </label>
         <textarea
-          placeholder="How did it go? Add a note…"
+          placeholder={t("notePlaceholder")}
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
           className="min-h-18.5 w-full rounded-xl border border-line bg-surface px-3.5 py-3 text-base text-ink outline-none focus:border-blue"
@@ -185,7 +190,7 @@ export function SessionEditorSheet({ session }: { session: Doc<"sessions"> }) {
         disabled={saving}
         className="w-full rounded-2xl bg-blue py-4 text-[15.5px] font-bold text-white disabled:opacity-50"
       >
-        Save
+        {t("save")}
       </button>
 
       <AlertDialog open={alert !== null} message={alert ?? ""} onClose={() => setAlert(null)} />

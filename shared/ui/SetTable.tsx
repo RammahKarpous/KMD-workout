@@ -1,3 +1,7 @@
+"use client";
+
+import { useTranslations } from "next-intl";
+
 /** Read-only set table: target sets (routine detail) or logged sets
  * (session detail) — same rendering either way, just weight/reps or
  * minutes per row. */
@@ -8,6 +12,7 @@ export function SetTable({
   sets: { weight?: string; reps?: string; min?: string; warmup?: boolean }[];
   cardio: boolean;
 }) {
+  const t = useTranslations("sets");
   const cols = cardio ? "grid-cols-[52px_1fr]" : "grid-cols-[52px_1fr_1fr]";
 
   // Working sets are numbered on their own — warm-ups don't take a number,
@@ -21,9 +26,9 @@ export function SetTable({
       <div
         className={`mb-1.5 grid ${cols} px-1.5 text-[10.5px] font-bold uppercase tracking-wide text-muted-2`}
       >
-        <span>Set</span>
-        <span>{cardio ? "Minutes" : "Kg"}</span>
-        {!cardio && <span>Reps</span>}
+        <span>{t("set")}</span>
+        <span>{cardio ? t("minutes") : t("kg")}</span>
+        {!cardio && <span>{t("reps")}</span>}
       </div>
       {sets.map((s, i) => (
         <div
@@ -33,7 +38,7 @@ export function SetTable({
           } ${s.warmup ? "opacity-60" : ""}`}
         >
           <span className={`font-bold ${s.warmup ? "text-orange" : "text-ink"}`}>
-            {s.warmup ? "W" : workingSetNumber[i]}
+            {s.warmup ? t("warmupMark") : workingSetNumber[i]}
           </span>
           {cardio ? (
             <span className="text-muted">{s.min || "–"}</span>

@@ -6,14 +6,7 @@ import {
   parseIsoDate,
 } from "@/shared/lib/food";
 import { sumNutrients, type Nutrients } from "@/shared/lib/nutrients";
-import { formatShortDiaryDate } from "@/features/food/diary/diaryModel";
-
 export type RangeKind = "week" | "month";
-
-const MONTHS = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December",
-];
 
 /**
  * Monday–Sunday. A calendar month is at most 31 days, which is the
@@ -50,15 +43,27 @@ export function shiftMonth(iso: string, delta: number): string {
   return formatIsoDate(nextYear, nextMonth, Math.min(day, lastDay));
 }
 
-export function formatMonthTitle(iso: string): string {
+export function formatMonthTitle(iso: string, locale = "en"): string {
   const { year, month } = parseIsoDate(iso);
-  return `${MONTHS[month - 1]} ${year}`;
+  return new Intl.DateTimeFormat(locale, {
+    month: "long",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(new Date(Date.UTC(year, month - 1, 1)));
 }
 
-export function formatPeriodLabel(anchor: string, kind: RangeKind): string {
+export function formatPeriodLabel(anchor: string, kind: RangeKind, locale = "en"): string {
   const range = periodRange(anchor, kind);
-  if (kind === "month") return formatMonthTitle(anchor);
-  return `${formatShortDiaryDate(range.start)} – ${formatShortDiaryDate(range.end)}`;
+  if (kind === "month") return formatMonthTitle(anchor, locale);
+  const fmt = new Intl.DateTimeFormat(locale, { day: "numeric", month: "short", timeZone: "UTC" });
+  const start = fmt.format(new Date(Date.UTC(...isoParts(range.start))));
+  const end = fmt.format(new Date(Date.UTC(...isoParts(range.end))));
+  return `${start} – ${end}`;
+}
+
+function isoParts(iso: string): [number, number, number] {
+  const { year, month, day } = parseIsoDate(iso);
+  return [year, month - 1, day];
 }
 
 /** One row per calendar day in the range, including days with no entries. */

@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
-import { DIETIST_COPY } from "@/features/food/dietist/copy";
+import { getTranslations } from "next-intl/server";
 import { DietistScreen } from "@/features/food/dietist/DietistScreen";
 
-export const metadata: Metadata = {
-  title: DIETIST_COPY.pageTitle,
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("food.dietist");
+  return { title: t("pageTitle") };
+}
 
 export default function FoodDietistPage() {
   return <DietistScreen />;

@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 import { SheetHeader } from "@/shared/ui/SheetHeader";
 
@@ -20,9 +21,10 @@ export function WorkoutSummaryScreen({
   onNotesBlur: () => void;
   onDone: () => void;
 }) {
+  const t = useTranslations("logging");
   return (
     <div className="p-4">
-      <SheetHeader title="Workout saved" onClose={onDone} />
+      <SheetHeader title={t("saved")} onClose={onDone} />
       <h2 className="mt-1 mb-3.5 px-0.5 text-[26px] font-extrabold tracking-tight">
         {title}
       </h2>
@@ -47,7 +49,7 @@ export function WorkoutSummaryScreen({
       {muscleSection && (
         <>
           <div className="mb-3 text-[12.5px] font-bold uppercase tracking-wide text-muted">
-            Muscles worked
+            {t("musclesWorked")}
           </div>
           {muscleSection}
         </>
@@ -55,10 +57,10 @@ export function WorkoutSummaryScreen({
 
       <div className="mt-4.5 mb-4.5">
         <label className="mb-1.5 block text-[12.5px] font-semibold text-muted">
-          Note (optional)
+          {t("noteOptional")}
         </label>
         <textarea
-          placeholder="How did it go? Add a note…"
+          placeholder={t("notePlaceholder")}
           value={notes}
           onChange={(e) => onNotesChange(e.target.value)}
           onBlur={onNotesBlur}
@@ -71,7 +73,7 @@ export function WorkoutSummaryScreen({
         onClick={onDone}
         className="w-full rounded-2xl bg-blue py-4 text-[15.5px] font-bold text-white"
       >
-        Done
+        {t("done")}
       </button>
     </div>
   );

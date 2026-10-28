@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
-import { PRODUCTS_COPY } from "@/features/food/products/copy";
+import { getTranslations } from "next-intl/server";
 import { ProductsScreen } from "@/features/food/products/ProductsScreen";
 
-export const metadata: Metadata = {
-  title: PRODUCTS_COPY.pageTitle,
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("food.products");
+  return { title: t("pageTitle") };
+}
 
 export default function FoodProductsPage() {
   return <ProductsScreen />;

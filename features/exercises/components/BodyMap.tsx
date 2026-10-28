@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useEffect, useRef } from "react";
 import { SVG_BACK, SVG_FRONT } from "../library/bodySvg";
 
@@ -14,6 +15,7 @@ type BodyMapProps =
  * the deliberate inline-style exceptions called out in the styling plan.
  */
 export function BodyMap(props: BodyMapProps) {
+  const t = useTranslations("exercises");
   const frontRef = useRef<HTMLDivElement>(null);
   const backRef = useRef<HTMLDivElement>(null);
 
@@ -54,7 +56,7 @@ export function BodyMap(props: BodyMapProps) {
     <div className="my-2 flex justify-center gap-4">
       <div className="text-center">
         <div className="mb-1.5 text-[11px] font-bold uppercase tracking-wide text-muted-2">
-          Front
+          {t("front")}
         </div>
         <div
           ref={frontRef}
@@ -64,7 +66,7 @@ export function BodyMap(props: BodyMapProps) {
       </div>
       <div className="text-center">
         <div className="mb-1.5 text-[11px] font-bold uppercase tracking-wide text-muted-2">
-          Back
+          {t("back")}
         </div>
         <div
           ref={backRef}

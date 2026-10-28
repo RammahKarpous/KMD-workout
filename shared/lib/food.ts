@@ -1,7 +1,7 @@
 /**
  * Food-tracker domain values shared by Convex functions and the UI.
  * Names are stable ids. The Laravel app stored Dutch display labels
- * ("Ontbijt", "Voor training"); a later i18n pass can translate these.
+ * ("Ontbijt", "Voor training"). Screens translate those ids from messages.
  */
 
 export const FOOD_MOMENTS = [

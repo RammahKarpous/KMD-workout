@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "convex/react";
+import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { useRef, useState, type KeyboardEvent, type RefObject } from "react";
 import { api } from "@/convex/_generated/api";
@@ -15,19 +16,22 @@ import {
   formatRangeDay,
   formatShortDiaryDate,
   isDiaryDate,
-  limitReadout,
   localTodayIso,
   redMeatWeekRange,
 } from "@/features/food/diary/diaryModel";
 import { LimitMeter } from "@/features/food/diary/LimitMeter";
+import { useLimitText } from "@/features/food/useLimitText";
 import { FOCUS_RING } from "@/features/food/products/focus";
-import { CATEGORY_LABEL, DIETIST_COPY } from "./copy";
 import { CategoryDonut } from "./CategoryDonut";
 import { categoryAmounts, foodsByCategory, weekdayCategoryRows } from "./dietistModel";
 
 type DietistTab = "day" | "week";
 
 export function DietistScreen() {
+  const t = useTranslations("food.dietist");
+  const categories = useTranslations("food.categories");
+  const locale = useLocale();
+  const limitText = useLimitText();
   const [anchor, setAnchor] = useState(() => localTodayIso());
   const [tab, setTab] = useState<DietistTab>("day");
   const dayTabRef = useRef<HTMLButtonElement>(null);
@@ -62,13 +66,13 @@ export function DietistScreen() {
   return (
     <div className="pt-2">
       <div className="flex items-baseline justify-between gap-3 pt-6.5 pb-4.5">
-        <h1 className="text-[26px] font-extrabold tracking-tight">{DIETIST_COPY.heading}</h1>
+        <h1 className="text-[26px] font-extrabold tracking-tight">{t("heading")}</h1>
         <Link href="/food" className={`text-[13px] font-semibold text-blue underline ${FOCUS_RING}`}>
-          {DIETIST_COPY.backToFood}
+          {t("backToFood")}
         </Link>
       </div>
 
-      <div role="tablist" aria-label={DIETIST_COPY.viewLabel} className="mb-4 flex gap-2">
+      <div role="tablist" aria-label={t("viewLabel")} className="mb-4 flex gap-2">
         <TabButton
           buttonRef={dayTabRef}
           selected={tab === "day"}
@@ -76,7 +80,7 @@ export function DietistScreen() {
           onSelect={() => selectTab("day")}
           onKeyDown={(event) => onTabKey(event, "day")}
         >
-          {DIETIST_COPY.dayTab}
+          {t("dayTab")}
         </TabButton>
         <TabButton
           buttonRef={weekTabRef}
@@ -85,7 +89,7 @@ export function DietistScreen() {
           onSelect={() => selectTab("week")}
           onKeyDown={(event) => onTabKey(event, "week")}
         >
-          {DIETIST_COPY.weekTab}
+          {t("weekTab")}
         </TabButton>
       </div>
 
@@ -99,21 +103,21 @@ export function DietistScreen() {
           inputId="dietist-day-date"
           anchor={anchor}
           valid={valid}
-          previousLabel={DIETIST_COPY.previousDay}
-          nextLabel={DIETIST_COPY.nextDay}
+          previousLabel={t("previousDay")}
+          nextLabel={t("nextDay")}
           onPrevious={() => setAnchor(adjacentDay(anchor, "previous"))}
           onNext={() => setAnchor(adjacentDay(anchor, "next"))}
           onChange={setAnchor}
         />
         <p aria-live="polite" className="mb-4 text-sm text-muted">
-          {valid ? formatDiaryDate(anchor) : DIETIST_COPY.chooseDate}
+          {valid ? formatDiaryDate(anchor, locale) : t("chooseDate")}
         </p>
         {loadingDay || !dayAmounts ? (
-          <p className="text-sm text-muted">{valid ? DIETIST_COPY.loading : DIETIST_COPY.chooseDate}</p>
+          <p className="text-sm text-muted">{valid ? t("loading") : t("chooseDate")}</p>
         ) : (
           <>
             <h2 className="mb-3 text-[13px] font-bold uppercase tracking-wide text-muted">
-              {DIETIST_COPY.donutHeading}
+              {t("donutHeading")}
             </h2>
             <div aria-hidden="true" className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
               {FOOD_CATEGORIES.map((category) => (
@@ -122,23 +126,23 @@ export function DietistScreen() {
             </div>
             <div className="overflow-x-auto">
               <table className="w-full min-w-[28rem] border-collapse text-left text-sm">
-                <caption className="mb-3 text-left text-sm text-muted">{DIETIST_COPY.tableCaption}</caption>
+                <caption className="mb-3 text-left text-sm text-muted">{t("tableCaption")}</caption>
                 <thead>
                   <tr className="border-b border-line">
-                    <th scope="col" className="px-2 py-2 font-semibold text-muted">{DIETIST_COPY.categoryColumn}</th>
-                    <th scope="col" className="px-2 py-2 font-semibold text-muted">{DIETIST_COPY.eatenColumn}</th>
-                    <th scope="col" className="px-2 py-2 font-semibold text-muted">{DIETIST_COPY.goalColumn}</th>
-                    <th scope="col" className="px-2 py-2 font-semibold text-muted">{DIETIST_COPY.statusColumn}</th>
+                    <th scope="col" className="px-2 py-2 font-semibold text-muted">{t("categoryColumn")}</th>
+                    <th scope="col" className="px-2 py-2 font-semibold text-muted">{t("eatenColumn")}</th>
+                    <th scope="col" className="px-2 py-2 font-semibold text-muted">{t("goalColumn")}</th>
+                    <th scope="col" className="px-2 py-2 font-semibold text-muted">{t("statusColumn")}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {FOOD_CATEGORIES.map((category) => {
                     const goal = CATEGORY_GOALS[category];
                     const value = dayAmounts[category];
-                    const readout = limitReadout(CATEGORY_LABEL[category], value, goal.max, goal.unit);
+                    const readout = limitText(categories(category), value, goal.max, goal.unit);
                     return (
                       <tr key={category} className="border-b border-line">
-                        <th scope="row" className="px-2 py-2 font-semibold text-ink">{CATEGORY_LABEL[category]}</th>
+                        <th scope="row" className="px-2 py-2 font-semibold text-ink">{categories(category)}</th>
                         <td className="px-2 py-2 text-ink">{formatDiaryNumber(value)} {goal.unit}</td>
                         <td className="px-2 py-2 text-ink">{formatDiaryNumber(goal.max)} {goal.unit}</td>
                         <td className={`px-2 py-2 text-ink ${readout.over ? "font-bold" : ""}`}>{readout.detail}</td>
@@ -149,16 +153,16 @@ export function DietistScreen() {
               </table>
             </div>
             <h2 className="mt-6 mb-3 text-[13px] font-bold uppercase tracking-wide text-muted">
-              {DIETIST_COPY.eatenHeading}
+              {t("eatenHeading")}
             </h2>
             {eaten.length === 0 ? (
-              <p className="text-sm text-muted">{DIETIST_COPY.nothingLogged}</p>
+              <p className="text-sm text-muted">{t("nothingLogged")}</p>
             ) : (
               <div className="flex flex-col gap-3">
                 {eaten.map((group) => (
                   <section key={group.category} aria-labelledby={`eaten-${group.category}`} className="rounded-card border border-line bg-surface p-3.5">
                     <h3 id={`eaten-${group.category}`} className="text-sm font-bold text-ink">
-                      {CATEGORY_LABEL[group.category]}
+                      {categories(group.category)}
                     </h3>
                     <ul className="mt-2 flex flex-col gap-1">
                       {group.items.map((item, index) => (
@@ -186,35 +190,35 @@ export function DietistScreen() {
           inputId="dietist-week-date"
           anchor={anchor}
           valid={valid}
-          previousLabel={DIETIST_COPY.previousWeek}
-          nextLabel={DIETIST_COPY.nextWeek}
+          previousLabel={t("previousWeek")}
+          nextLabel={t("nextWeek")}
           onPrevious={() => setAnchor(addIsoDays(anchor, -7))}
           onNext={() => setAnchor(addIsoDays(anchor, 7))}
           onChange={setAnchor}
         />
         <p aria-live="polite" className="mb-4 text-sm text-muted">
-          {week ? `${formatShortDiaryDate(week.start)} – ${formatShortDiaryDate(week.end)}. ${DIETIST_COPY.redMeatNote}` : DIETIST_COPY.chooseDate}
+          {week ? `${formatShortDiaryDate(week.start, locale)} – ${formatShortDiaryDate(week.end, locale)}. ${t("redMeatNote")}` : t("chooseDate")}
         </p>
         {loadingWeek || redMeat === null || !weekRows ? (
-          <p className="text-sm text-muted">{valid ? DIETIST_COPY.loading : DIETIST_COPY.chooseDate}</p>
+          <p className="text-sm text-muted">{valid ? t("loading") : t("chooseDate")}</p>
         ) : (
           <>
             <h2 className="mb-2 text-[13px] font-bold uppercase tracking-wide text-muted">
-              {DIETIST_COPY.redMeatTitle}
+              {t("redMeatTitle")}
             </h2>
-            <LimitMeter label={DIETIST_COPY.redMeatMeter} value={redMeat} limit={RED_MEAT_LIMIT} unit={DIETIST_COPY.unitGrams} />
+            <LimitMeter label={t("redMeatMeter")} value={redMeat} limit={RED_MEAT_LIMIT} unit={t("unitGrams")} />
             <h2 className="mt-6 mb-3 text-[13px] font-bold uppercase tracking-wide text-muted">
-              {DIETIST_COPY.weekHeading}
+              {t("weekHeading")}
             </h2>
             <div className="overflow-x-auto">
               <table className="w-full min-w-[36rem] border-collapse text-left text-sm">
-                <caption className="mb-3 text-left text-sm text-muted">{DIETIST_COPY.weekTableCaption}</caption>
+                <caption className="mb-3 text-left text-sm text-muted">{t("weekTableCaption")}</caption>
                 <thead>
                   <tr className="border-b border-line">
-                    <th scope="col" className="px-2 py-2 font-semibold text-muted">{DIETIST_COPY.categoryColumn}</th>
+                    <th scope="col" className="px-2 py-2 font-semibold text-muted">{t("categoryColumn")}</th>
                     {weekRows.map((row) => (
                       <th key={row.date} scope="col" className="px-2 py-2 font-semibold text-muted">
-                        {formatRangeDay(row.date)}
+                        {formatRangeDay(row.date, locale)}
                       </th>
                     ))}
                   </tr>
@@ -224,14 +228,14 @@ export function DietistScreen() {
                     const goal = CATEGORY_GOALS[category];
                     return (
                       <tr key={category} className="border-b border-line">
-                        <th scope="row" className="px-2 py-2 font-semibold text-ink">{CATEGORY_LABEL[category]}</th>
+                        <th scope="row" className="px-2 py-2 font-semibold text-ink">{categories(category)}</th>
                         {weekRows.map((row) => {
                           const value = row.amounts[category];
-                          const readout = limitReadout(CATEGORY_LABEL[category], value, goal.max, goal.unit);
+                          const readout = limitText(categories(category), value, goal.max, goal.unit);
                           return (
                             <td key={row.date} className={`px-2 py-2 text-ink ${readout.over ? "font-bold" : ""}`}>
                               {formatDiaryNumber(value)} {goal.unit}
-                              {readout.over ? ` ${DIETIST_COPY.over}` : ""}
+                              {readout.over ? ` ${t("over")}` : ""}
                             </td>
                           );
                         })}
@@ -267,6 +271,7 @@ function DayNavigator({
   onNext: () => void;
   onChange: (value: string) => void;
 }) {
+  const t = useTranslations("food.dietist");
   return (
     <div className="mb-2 flex items-end gap-2">
       <button
@@ -276,11 +281,11 @@ function DayNavigator({
         onClick={onPrevious}
         className={`min-h-11 shrink-0 rounded-xl bg-surface px-3 text-sm font-bold text-blue disabled:opacity-40 ${FOCUS_RING}`}
       >
-        {DIETIST_COPY.previous}
+        {t("previous")}
       </button>
       <div className="min-w-0 flex-1">
         <label htmlFor={inputId} className="mb-1 block text-[12.5px] font-semibold text-muted">
-          {DIETIST_COPY.dateLabel}
+          {t("dateLabel")}
         </label>
         <input
           id={inputId}
@@ -297,7 +302,7 @@ function DayNavigator({
         onClick={onNext}
         className={`min-h-11 shrink-0 rounded-xl bg-surface px-3 text-sm font-bold text-blue disabled:opacity-40 ${FOCUS_RING}`}
       >
-        {DIETIST_COPY.next}
+        {t("next")}
       </button>
     </div>
   );

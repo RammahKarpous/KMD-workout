@@ -1,5 +1,7 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+
 import { useState } from "react";
 
 export type RadarChartAxis = { label: string; current: number; previous: number };
@@ -17,6 +19,7 @@ export type RadarChartAxis = { label: string; current: number; previous: number 
  */
 export function RadarChart({ axes }: { axes: RadarChartAxis[] }) {
   const [active, setActive] = useState<number | null>(null);
+  const t = useTranslations("stats");
 
   const n = axes.length;
   const cx = 140;
@@ -133,19 +136,19 @@ export function RadarChart({ axes }: { axes: RadarChartAxis[] }) {
           style={{ left: `${(activePos[0] / 280) * 100}%`, top: `${(activePos[1] / 276) * 100}%` }}
         >
           <div className="font-bold text-ink">{activeAxis.label}</div>
-          <div className="text-blue">Current: {Math.round(activeAxis.current * 10) / 10}</div>
-          <div className="text-muted-2">Previous: {Math.round(activeAxis.previous * 10) / 10}</div>
+          <div className="text-blue">{t("current")}: {Math.round(activeAxis.current * 10) / 10}</div>
+          <div className="text-muted-2">{t("previous")}: {Math.round(activeAxis.previous * 10) / 10}</div>
         </div>
       )}
 
       <div className="mt-2 flex items-center justify-center gap-4 text-[12px] text-muted-2">
         <span className="flex items-center gap-1.5">
           <span className="inline-block h-2.5 w-2.5 rounded-full bg-blue" />
-          Current
+          {t("current")}
         </span>
         <span className="flex items-center gap-1.5">
           <span className="inline-block h-2.5 w-2.5 rounded-full bg-muted" />
-          Previous
+          {t("previous")}
         </span>
       </div>
     </div>

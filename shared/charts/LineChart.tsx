@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { formatDate, formatShortDate } from "@/shared/lib/date";
+import { useDateText } from "@/features/i18n/useDateText";
 
 export type LineChartPoint = { ts: number; value: number };
 
@@ -26,6 +26,7 @@ export function LineChart({
   color?: string;
 }) {
   const [active, setActive] = useState<number | null>(null);
+  const dates = useDateText();
 
   const width = 300;
   const height = 150;
@@ -91,7 +92,7 @@ export function LineChart({
           textAnchor="start"
           className="fill-muted-2 text-[9px] font-semibold"
         >
-          {formatShortDate(first.ts)}
+          {dates.formatShortDate(first.ts)}
         </text>
         {points.length > 1 && (
           <text
@@ -100,7 +101,7 @@ export function LineChart({
             textAnchor="end"
             className="fill-muted-2 text-[9px] font-semibold"
           >
-            {formatShortDate(last.ts)}
+            {dates.formatShortDate(last.ts)}
           </text>
         )}
 
@@ -165,7 +166,7 @@ export function LineChart({
           style={{ left: `${(xAt(active) / width) * 100}%` }}
         >
           <div className="font-bold text-ink">{formatValue(activePoint.value)}</div>
-          <div className="text-muted-2">{formatDate(activePoint.ts)}</div>
+          <div className="text-muted-2">{dates.formatDate(activePoint.ts)}</div>
         </div>
       )}
     </div>

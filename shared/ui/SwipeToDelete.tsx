@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useRef, useState, type ReactNode } from "react";
 
 const REVEAL = 76;
@@ -28,6 +29,7 @@ export function SwipeToDelete({
   const [dragging, setDragging] = useState(false);
   const origin = useRef<{ x: number; y: number } | null>(null);
   const engaged = useRef(false);
+  const t = useTranslations("common");
 
   function onPointerDown(e: React.PointerEvent) {
     origin.current = { x: e.clientX, y: e.clientY };
@@ -71,10 +73,10 @@ export function SwipeToDelete({
           onDelete();
         }}
         style={{ width: REVEAL }}
-        className="absolute inset-y-0 right-0 flex items-center justify-center rounded-lg bg-danger text-[13px] font-bold text-white"
-        aria-label="Delete"
+        className="absolute inset-y-0 right-0 flex items-center justify-center rounded-lg bg-danger text-[13px] font-bold text-black"
+        aria-label={t("delete")}
       >
-        Delete
+        {t("delete")}
       </button>
       <div
         onPointerDown={onPointerDown}

@@ -1,13 +1,18 @@
 "use client";
 
 import { usePaginatedQuery } from "convex/react";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { api } from "@/convex/_generated/api";
 import type { Doc } from "@/convex/_generated/dataModel";
-import { formatDate, formatDuration } from "@/shared/lib/date";
+import { useDateText } from "@/features/i18n/useDateText";
+import { intensityKey } from "@/features/logging/intensity";
+import { formatDuration } from "@/shared/lib/date";
 import { CardioIcon, StrengthIcon } from "@/shared/ui/icons";
 
 export function SessionHistoryList() {
+  const t = useTranslations("progress");
+  const common = useTranslations("common");
   const { results, status, loadMore } = usePaginatedQuery(
     api.logging.listRecentSessions,
     {},
@@ -21,7 +26,7 @@ export function SessionHistoryList() {
   if (results.length === 0) {
     return (
       <div className="py-8 text-center text-[14px] text-muted-2">
-        No sessions logged yet.
+        {t("noSessions")}
       </div>
     );
   }
@@ -37,7 +42,7 @@ export function SessionHistoryList() {
           onClick={() => loadMore(20)}
           className="mt-1 w-full rounded-xl bg-surface py-3 text-[13.5px] font-bold text-blue"
         >
-          Load more
+          {common("loadMore")}
         </button>
       )}
       {status === "LoadingMore" && (
@@ -48,10 +53,17 @@ export function SessionHistoryList() {
 }
 
 function SessionRow({ session }: { session: Doc<"sessions"> }) {
+  const logging = useTranslations("logging");
+  const progress = useTranslations("progress");
+  const cardioLabel = useTranslations("cardio");
+  const intensityLabel = useTranslations("intensity");
+  const dates = useDateText();
   const isStrength = session.type === "strength";
   const title = isStrength
-    ? (session.routineName ?? "Workout")
-    : (session.cardioType ?? "Cardio");
+    ? (session.routineName ?? logging("defaultTitle"))
+    : session.cardioType
+      ? cardioLabel(session.cardioType as "Walking")
+      : logging("cardio");
 
   let desc: string;
   if (isStrength) {
@@ -62,13 +74,15 @@ function SessionRow({ session }: { session: Doc<"sessions"> }) {
     );
     desc = [
       session.durationSec ? formatDuration(session.durationSec) : null,
-      `${exercises.length} exercise${exercises.length === 1 ? "" : "s"}`,
-      `${setCount} set${setCount === 1 ? "" : "s"}`,
+      progress("exerciseCount", { count: exercises.length }),
+      progress("setCount", { count: setCount }),
     ]
       .filter(Boolean)
       .join(" · ");
   } else {
-    desc = `${session.duration} min · ${(session.intensity ?? "").replace(" (conversational)", "")}`;
+    desc = `${logging("minutesValue", { count: session.duration ?? 0 })} · ${
+      session.intensity ? intensityLabel(intensityKey(session.intensity)) : ""
+    }`;
   }
 
   return (
@@ -88,7 +102,7 @@ function SessionRow({ session }: { session: Doc<"sessions"> }) {
       <div className="min-w-0 flex-1">
         <div className="truncate text-[14.5px] font-bold text-ink">{title}</div>
         <div className="truncate text-[12px] text-muted-2">
-          {formatDate(session.ts)} &middot; {desc}
+          {dates.formatDate(session.ts)} &middot; {desc}
         </div>
       </div>
       <span className="text-lg text-muted-2">&rsaquo;</span>

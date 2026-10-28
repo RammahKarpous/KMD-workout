@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation, usePaginatedQuery } from "convex/react";
+import { useTranslations } from "next-intl";
 import { useEffect, useId, useRef, useState } from "react";
 import { api } from "@/convex/_generated/api";
 import type { Doc, Id } from "@/convex/_generated/dataModel";
@@ -8,10 +9,8 @@ import { FOOD_CATEGORIES, FOOD_MOMENTS, type FoodCategory, type FoodMoment } fro
 import { SheetHeader } from "@/shared/ui/SheetHeader";
 import { useSheet } from "@/shared/ui/SheetHost";
 import { useFocusTrap } from "@/shared/ui/useFocusTrap";
-import { productResultSummary } from "@/features/food/products/copy";
-import { productQuery } from "@/features/food/products/productForm";
+import { productQuery, productSummary } from "@/features/food/products/productForm";
 import { FIELD_CLASS, FOCUS_RING } from "@/features/food/products/focus";
-import { CATEGORY_LABEL, DIARY_COPY, MOMENT_LABEL } from "./copy";
 import {
   portionKind,
   validateEntryForm,
@@ -41,6 +40,9 @@ export function EntryFormSheet({
   existing?: DiaryEntryDraft | null;
   onSaved: (message: string) => void;
 }) {
+  const t = useTranslations("food.diary");
+  const moments = useTranslations("food.moments");
+  const categories = useTranslations("food.categories");
   const { pop } = useSheet();
   const addEntry = useMutation(api.foodEntries.add);
   const updateEntry = useMutation(api.foodEntries.update);
@@ -91,7 +93,7 @@ export function EntryFormSheet({
           isRedMeat: result.value.isRedMeat,
           ...portion,
         });
-        onSaved(DIARY_COPY.updated);
+        onSaved(t("updated"));
       } else {
         await addEntry({
           productId: result.value.productId as Id<"foodProducts">,
@@ -101,11 +103,11 @@ export function EntryFormSheet({
           isRedMeat: result.value.isRedMeat,
           ...portion,
         });
-        onSaved(DIARY_COPY.added);
+        onSaved(t("added"));
       }
       pop();
     } catch (error) {
-      setFormError(error instanceof Error ? error.message : DIARY_COPY.saveFailed);
+      setFormError(error instanceof Error ? error.message : t("saveFailed"));
     } finally {
       setSaving(false);
     }
@@ -127,7 +129,7 @@ export function EntryFormSheet({
     >
       <SheetHeader
         titleId={titleId}
-        title={existing ? DIARY_COPY.editTitle : DIARY_COPY.createTitle}
+        title={existing ? t("editTitle") : t("createTitle")}
         onClose={pop}
       />
       <form
@@ -140,24 +142,24 @@ export function EntryFormSheet({
       >
         <SelectField
           id={fieldId("moment")}
-          label={DIARY_COPY.momentLabel}
+          label={t("momentLabel")}
           value={moment}
-          placeholder={DIARY_COPY.momentPlaceholder}
-          error={errors.moment}
+          placeholder={t("momentPlaceholder")}
+          error={errors.moment ? t(errors.moment) : undefined}
           onChange={setMoment}
-          options={FOOD_MOMENTS.map((value) => ({ value, label: MOMENT_LABEL[value] }))}
+          options={FOOD_MOMENTS.map((value) => ({ value, label: moments(value) }))}
         />
         <SelectField
           id={fieldId("category")}
-          label={DIARY_COPY.categoryLabel}
+          label={t("categoryLabel")}
           value={category}
-          placeholder={DIARY_COPY.categoryPlaceholder}
-          error={errors.category}
+          placeholder={t("categoryPlaceholder")}
+          error={errors.category ? t(errors.category) : undefined}
           onChange={(next) => {
             setCategory(next);
             if (next !== "vlees") setIsRedMeat(false);
           }}
-          options={FOOD_CATEGORIES.map((value) => ({ value, label: CATEGORY_LABEL[value] }))}
+          options={FOOD_CATEGORIES.map((value) => ({ value, label: categories(value) }))}
         />
         {category === "vlees" ? (
           <label className="flex min-h-11 items-center gap-2.5 text-sm text-ink">
@@ -167,14 +169,14 @@ export function EntryFormSheet({
               onChange={(event) => setIsRedMeat(event.target.checked)}
               className={`h-5 w-5 accent-blue ${FOCUS_RING}`}
             />
-            {DIARY_COPY.redMeatToggle}
+            {t("redMeatToggle")}
           </label>
         ) : null}
 
         <ProductPicker
           selectedId={productId}
           selectedName={productName}
-          error={errors.productId}
+          error={errors.productId ? t(errors.productId) : undefined}
           onSelect={(product) => {
             setProductId(product._id);
             setProductName(product.name);
@@ -188,7 +190,7 @@ export function EntryFormSheet({
 
         <div>
           <label htmlFor={fieldId("amount")} className="mb-1.5 block text-[12.5px] font-semibold text-muted">
-            {drink ? DIARY_COPY.amountMl : DIARY_COPY.amountGrams}
+            {drink ? t("amountMl") : t("amountGrams")}
           </label>
           <input
             id={fieldId("amount")}
@@ -202,7 +204,7 @@ export function EntryFormSheet({
           />
           {errors.amount ? (
             <p id={errorDomId("amount")} className="mt-1.5 text-[12.5px] text-danger">
-              {errors.amount}
+              {t(errors.amount)}
             </p>
           ) : null}
         </div>
@@ -218,7 +220,7 @@ export function EntryFormSheet({
           disabled={saving}
           className={`rounded-2xl bg-blue py-4 text-[15.5px] font-bold text-black disabled:opacity-60 ${FOCUS_RING}`}
         >
-          {existing ? DIARY_COPY.saveEdit : DIARY_COPY.saveCreate}
+          {existing ? t("saveEdit") : t("saveCreate")}
         </button>
       </form>
     </div>
@@ -242,6 +244,8 @@ function ProductPicker({
   const [debounced, setDebounced] = useState("");
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const searchRef = useRef<HTMLInputElement>(null);
+  const t = useTranslations("food.diary");
+  const productText = useTranslations("food.products");
 
   useEffect(() => {
     return () => {
@@ -271,12 +275,12 @@ function ProductPicker({
   return (
     <div>
       <label htmlFor={fieldId("productId")} className="mb-1.5 block text-[12.5px] font-semibold text-muted">
-        {DIARY_COPY.productLabel}
+        {t("productLabel")}
       </label>
       {selectedId && selectedName ? (
         <p className="mb-2 flex items-center justify-between gap-2 rounded-xl border border-line bg-surface px-3 py-2 text-sm text-ink">
           <span>
-            {DIARY_COPY.selectedProduct}: {selectedName}
+            {t("selectedProduct")}: {selectedName}
           </span>
           <button
             type="button"
@@ -286,7 +290,7 @@ function ProductPicker({
             }}
             className={`shrink-0 font-semibold text-blue underline ${FOCUS_RING}`}
           >
-            {DIARY_COPY.clearProduct}
+            {t("clearProduct")}
           </button>
         </p>
       ) : null}
@@ -297,7 +301,7 @@ function ProductPicker({
         value={search}
         maxLength={64}
         autoComplete="off"
-        placeholder={DIARY_COPY.productPlaceholder}
+        placeholder={t("productPlaceholder")}
         aria-invalid={error ? true : undefined}
         aria-describedby={error ? errorDomId("productId") : "entry-product-summary"}
         aria-controls="entry-product-results"
@@ -310,14 +314,17 @@ function ProductPicker({
         className={FIELD_CLASS}
       />
       <p id="entry-product-summary" aria-live="polite" className="mt-1.5 text-[12.5px] text-muted">
-        {productResultSummary({
-          query: plan.mode === "search" ? plan.query : "",
-          count: active.results.length,
-          status: summaryStatus,
-          canLoadMore: active.status === "CanLoadMore" || active.status === "LoadingMore",
-        })}
+        {(() => {
+          const summary = productSummary({
+            query: plan.mode === "search" ? plan.query : "",
+            count: active.results.length,
+            status: summaryStatus,
+            canLoadMore: active.status === "CanLoadMore" || active.status === "LoadingMore",
+          });
+          return productText(summary.key, summary.values);
+        })()}
       </p>
-      <ul id="entry-product-results" aria-label={DIARY_COPY.productLabel} className="mt-2 flex max-h-48 flex-col gap-1 overflow-y-auto">
+      <ul id="entry-product-results" aria-label={t("productLabel")} className="mt-2 flex max-h-48 flex-col gap-1 overflow-y-auto">
         {active.results.map((product) => (
           <li key={product._id}>
             <button
@@ -339,7 +346,7 @@ function ProductPicker({
           onClick={() => active.loadMore(PAGE_SIZE)}
           className={`mt-2 w-full rounded-xl bg-surface py-2 text-sm font-bold text-blue ${FOCUS_RING}`}
         >
-          {DIARY_COPY.loadMore}
+          {t("loadMore")}
         </button>
       ) : null}
       {error ? (

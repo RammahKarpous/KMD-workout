@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation, usePreloadedQuery, useQuery, type Preloaded } from "convex/react";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { api } from "@/convex/_generated/api";
@@ -28,11 +29,13 @@ export function RoutineDetail({
   const router = useRouter();
 
   const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const t = useTranslations("workout");
+  const nav = useTranslations("nav");
 
   if (!routine) {
     return (
       <div className="pt-10 text-center text-sm text-muted-2">
-        Routine not found.
+        {t("notFound")}
       </div>
     );
   }
@@ -49,7 +52,7 @@ export function RoutineDetail({
         className="fixed top-[calc(env(safe-area-inset-top)+10px)] left-3 z-20 flex items-center gap-1 rounded-full bg-surface/90 px-3 py-2 text-[14px] font-semibold text-muted shadow-md backdrop-blur-md md:static md:top-auto md:left-auto md:z-auto md:mb-2 md:-ml-1.5 md:rounded-lg md:bg-transparent md:px-1.5 md:py-2 md:text-[15px] md:shadow-none md:backdrop-blur-none"
       >
         <BackIcon />
-        Workout
+        {nav("workout")}
       </button>
 
       <h1 className="mb-4 text-[24px] font-extrabold tracking-tight">
@@ -75,13 +78,13 @@ export function RoutineDetail({
         }}
         className="mb-5 w-full rounded-2xl bg-blue py-4 text-[15.5px] font-bold text-white"
       >
-        Start routine
+        {t("startRoutine")}
       </button>
 
       <RoutineTrendChart routine={routine} />
 
       <div className="mb-3 flex items-center justify-between">
-        <span className="text-[15px] font-semibold text-muted">Exercises</span>
+        <span className="text-[15px] font-semibold text-muted">{t("exercises")}</span>
         <button
           type="button"
           onClick={() =>
@@ -89,7 +92,7 @@ export function RoutineDetail({
           }
           className="text-sm font-bold text-blue"
         >
-          Edit routine
+          {t("editRoutine")}
         </button>
       </div>
 
@@ -115,7 +118,7 @@ export function RoutineDetail({
       {routine.exercises.length > 0 && (
         <>
           <div className="mt-6 mb-3 text-[12.5px] font-bold uppercase tracking-wide text-muted">
-            Muscles trained
+            {t("musclesTrained")}
           </div>
           <MusclePanel
             exercises={routine.exercises}
@@ -129,13 +132,13 @@ export function RoutineDetail({
         onClick={() => setConfirmingDelete(true)}
         className="mx-auto mt-8 block text-[15px] font-semibold text-danger"
       >
-        Delete routine
+        {t("deleteRoutine")}
       </button>
 
       <ConfirmDialog
         open={confirmingDelete}
         danger
-        message={`Delete "${routine.name}"?`}
+        message={t("deleteRoutineConfirm", { name: routine.name })}
         onCancel={() => setConfirmingDelete(false)}
         onConfirm={async () => {
           setConfirmingDelete(false);

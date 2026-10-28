@@ -1,11 +1,15 @@
 "use client";
 
 import { useQuery } from "convex/react";
+import { useTranslations } from "next-intl";
 import { api } from "@/convex/_generated/api";
 import { startOfWeek } from "@/shared/lib/date";
 import { RadarChart } from "@/shared/charts/RadarChart";
 
 export function TrendsTab() {
+  const t = useTranslations("stats");
+  const logging = useTranslations("logging");
+  const groups = useTranslations("groups");
   const currentWeekStartTs = startOfWeek().getTime();
   const data = useQuery(api.stats.getWeekTrends, { currentWeekStartTs });
 
@@ -14,31 +18,31 @@ export function TrendsTab() {
   }
 
   const axes = data.radar.axes.map((label) => ({
-    label,
+    label: groups(label as "Glutes"),
     current: data.radar.current[label] ?? 0,
     previous: data.radar.previous[label] ?? 0,
   }));
 
   return (
     <div>
-      <div className="mb-2.5 text-center text-[13px] text-muted-2">This week vs last week</div>
+      <div className="mb-2.5 text-center text-[13px] text-muted-2">{t("thisVsLast")}</div>
       <RadarChart axes={axes} />
 
       <div className="mt-6 grid grid-cols-2 gap-3">
-        <TrendCard label="Workouts" current={data.current.workouts} previous={data.previous.workouts} />
+        <TrendCard label={t("workouts")} current={data.current.workouts} previous={data.previous.workouts} />
         <TrendCard
-          label="Duration"
+          label={logging("duration")}
           current={Math.round(data.current.durationSec / 60)}
           previous={Math.round(data.previous.durationSec / 60)}
           unit=" min"
         />
         <TrendCard
-          label="Volume"
+          label={logging("volume")}
           current={Math.round(data.current.volume)}
           previous={Math.round(data.previous.volume)}
           unit=" kg"
         />
-        <TrendCard label="Sets" current={data.current.sets} previous={data.previous.sets} />
+        <TrendCard label={logging("sets")} current={data.current.sets} previous={data.previous.sets} />
       </div>
     </div>
   );
