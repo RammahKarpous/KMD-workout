@@ -20,7 +20,10 @@ export function FoodSubnav() {
   const pathname = usePathname();
 
   return (
-    <nav aria-label={t("foodLabel")} className="flex gap-2 overflow-x-auto pt-4 pb-1">
+    <nav
+      aria-label={t("foodLabel")}
+      className="flex w-full flex-nowrap items-center justify-center-safe gap-2 overflow-x-auto px-1 pt-4 pb-1"
+    >
       {LINKS.map((link) => {
         const current = pathname === link.href;
         return (
@@ -28,7 +31,7 @@ export function FoodSubnav() {
             key={link.href}
             href={link.href}
             aria-current={current ? "page" : undefined}
-            className={`inline-flex min-h-11 shrink-0 items-center rounded-full px-3.5 text-[13px] font-bold ${FOCUS_RING} ${
+            className={`inline-flex min-h-11 min-w-6 shrink-0 items-center rounded-full px-3.5 text-[13px] font-bold ${FOCUS_RING} ${
               current ? "bg-blue text-black" : "bg-surface-2 text-ink"
             }`}
           >

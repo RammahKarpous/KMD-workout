@@ -7,9 +7,9 @@ import { BarChart3, Dumbbell, LineChart, Utensils } from "lucide-react";
 
 const TABS = [
   { href: "/", key: "workout", icon: Dumbbell },
-  { href: "/food", key: "food", icon: Utensils },
   { href: "/progress", key: "progress", icon: LineChart },
   { href: "/stats", key: "statistics", icon: BarChart3 },
+  { href: "/food", key: "food", icon: Utensils },
 ] as const;
 
 const FOCUS_RING =
@@ -35,7 +35,7 @@ export function BottomNav() {
             key={tab.href}
             href={tab.href}
             aria-current={active ? "page" : undefined}
-            className={`flex flex-col items-center gap-1 rounded-xl px-3.5 py-1.5 text-[11px] font-semibold md:flex-row md:gap-2 md:rounded-full md:px-4 md:py-2 ${FOCUS_RING} ${
+            className={`flex min-h-11 min-w-6 flex-col items-center gap-1 rounded-xl px-3.5 py-1.5 text-[11px] font-semibold md:flex-row md:gap-2 md:rounded-full md:px-4 md:py-2 ${FOCUS_RING} ${
               active ? "text-blue md:bg-surface-2" : "text-muted-2 hover:text-ink"
             }`}
           >
