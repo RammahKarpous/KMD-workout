@@ -1,29 +1,30 @@
 "use client";
 
 import { useMutation, usePaginatedQuery } from "convex/react";
+import { Pencil, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { api } from "@/convex/_generated/api";
 import type { Doc } from "@/convex/_generated/dataModel";
 import { ConfirmDialog } from "@/shared/ui/ConfirmDialog";
-import { useSheet } from "@/shared/ui/SheetHost";
-import { FOCUS_RING } from "./focus";
+import { FOCUS_RING, LEGACY_FIELD } from "./focus";
 import { ProductFormSheet } from "./ProductFormSheet";
-import { formatPer100g, productQuery, productSummary, NUTRIENT_FIELD_KEYS } from "./productForm";
+import { productQuery, productSummary } from "./productForm";
 
 const PAGE_SIZE = 20;
 const SEARCH_DELAY_MS = 300;
 
 export function ProductsScreen() {
   const t = useTranslations("food.products");
-  const { push } = useSheet();
   const removeProduct = useMutation(api.foodProducts.remove);
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [pendingDelete, setPendingDelete] = useState<Doc<"foodProducts"> | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [editing, setEditing] = useState<Doc<"foodProducts"> | null>(null);
+  const [formKey, setFormKey] = useState(0);
+  const formAnchor = useRef<HTMLDivElement>(null);
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -32,10 +33,12 @@ export function ProductsScreen() {
     };
   }, []);
 
+  useEffect(() => {
+    if (!editing) return;
+    formAnchor.current?.scrollIntoView({ block: "start" });
+  }, [editing]);
+
   const plan = productQuery(debouncedSearch);
-  // Only one of these runs. Switching indexes mid-pagination would reuse a
-  // cursor that belongs to the other query, so an empty box skips search
-  // and a real query skips the alphabetical list.
   const list = usePaginatedQuery(
     api.foodProducts.list,
     plan.mode === "list" ? {} : "skip",
@@ -54,39 +57,28 @@ export function ProductsScreen() {
         ? "loading-more"
         : "ready";
 
-  function openCreate() {
-    push(
-      "product-form",
-      <ProductFormSheet onSaved={setStatusMessage} />,
-    );
-  }
-
-  function openEdit(product: Doc<"foodProducts">) {
-    push(
-      "product-form",
-      <ProductFormSheet existing={product} onSaved={setStatusMessage} />,
-    );
+  function finishSave(message: string) {
+    setStatusMessage(message);
+    setEditing(null);
+    setFormKey((key) => key + 1);
   }
 
   return (
-    <div className="pt-2">
-      <div className="flex items-baseline justify-between gap-3 pt-6.5 pb-4.5">
-        <h1 className="text-[26px] font-extrabold tracking-tight">{t("heading")}</h1>
-        <Link href="/food" className={`text-[13px] font-semibold text-blue underline ${FOCUS_RING}`}>
-          {t("backToFood")}
-        </Link>
+    <div className="mx-auto w-full max-w-md pt-2">
+      <div ref={formAnchor}>
+        <ProductFormSheet
+          key={editing ? editing._id : `new-${formKey}`}
+          existing={editing}
+          onSaved={finishSave}
+          onCancel={() => {
+            setEditing(null);
+            setFormKey((key) => key + 1);
+          }}
+        />
       </div>
 
-      <button
-        type="button"
-        onClick={openCreate}
-        className={`mb-4 w-full rounded-2xl bg-blue py-4 text-[15.5px] font-bold text-black ${FOCUS_RING}`}
-      >
-        {t("add")}
-      </button>
-
-      <div className="mb-3">
-        <label htmlFor="product-search" className="mb-1.5 block text-[12.5px] font-semibold text-muted">
+      <div className="mt-4">
+        <label htmlFor="product-search" className="sr-only">
           {t("searchLabel")}
         </label>
         <input
@@ -102,11 +94,11 @@ export function ProductsScreen() {
             if (searchTimer.current) clearTimeout(searchTimer.current);
             searchTimer.current = setTimeout(() => setDebouncedSearch(next), SEARCH_DELAY_MS);
           }}
-          className={`w-full rounded-xl border border-line bg-surface px-3.5 py-3 text-base text-ink focus:border-blue ${FOCUS_RING}`}
+          className={LEGACY_FIELD}
         />
       </div>
 
-      <p aria-live="polite" aria-atomic="true" className="mb-3 text-sm text-muted">
+      <p aria-live="polite" aria-atomic="true" className="sr-only">
         {(() => {
           const summary = productSummary({
             query: plan.mode === "search" ? plan.query : "",
@@ -121,37 +113,83 @@ export function ProductsScreen() {
         {statusMessage ?? ""}
       </p>
       {statusMessage ? (
-        <p className="mb-3 rounded-xl border border-green/40 bg-green/10 px-3 py-2 text-sm text-ink">
+        <p className="mt-3 rounded-xl border border-green/40 bg-green/10 px-3 py-2 text-sm text-ink">
           {statusMessage}
         </p>
       ) : null}
       {deleteError ? (
-        <p role="alert" className="mb-3 text-sm text-danger">
+        <p role="alert" className="mt-3 text-sm text-danger">
           {deleteError}
         </p>
       ) : null}
 
-      {summaryStatus === "loading" ? (
-        <div className="flex flex-col gap-2" aria-hidden="true">
-          <div className="h-24 animate-pulse rounded-card bg-surface" />
-          <div className="h-24 animate-pulse rounded-card bg-surface" />
-        </div>
-      ) : active.results.length === 0 ? null : (
-        <ul className="flex flex-col gap-2">
-          {active.results.map((product) => (
-            <li key={product._id}>
-              <ProductCard
-                product={product}
-                onEdit={() => openEdit(product)}
-                onDelete={() => {
-                  setDeleteError(null);
-                  setPendingDelete(product);
-                }}
-              />
-            </li>
-          ))}
-        </ul>
-      )}
+      <div className="mt-4 overflow-x-auto">
+        <table className="w-full border-collapse text-left text-sm">
+          <caption className="sr-only">{t("listCaption")}</caption>
+          <thead>
+            <tr className="border-b border-line">
+              <th scope="col" className="px-1 py-2 text-center text-sm font-medium text-ink">
+                {t("nameColumn")}
+              </th>
+              <th scope="col" className="sr-only">
+                {t("edit")}
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {summaryStatus === "loading" ? (
+              <tr>
+                <td colSpan={2} className="px-1 py-3 text-sm text-muted">
+                  {t("loading")}
+                </td>
+              </tr>
+            ) : active.results.length === 0 ? (
+              <tr>
+                <td colSpan={2} className="px-1 py-3 text-sm text-muted">
+                  {plan.mode === "search" ? t("summaryEmptySearch", { query: plan.query }) : t("summaryEmpty")}
+                </td>
+              </tr>
+            ) : (
+              active.results.map((product) => (
+                <tr key={product._id} className="border-b border-line">
+                  <th scope="row" className="px-1 py-2 text-left text-sm font-normal text-ink">
+                    {product.name}
+                    {product.barcode ? (
+                      <span className="mt-0.5 block text-[12px] text-muted">{product.barcode}</span>
+                    ) : null}
+                  </th>
+                  <td className="w-px px-1 py-1">
+                    <div className="flex justify-end">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setDeleteError(null);
+                          setEditing(product);
+                        }}
+                        aria-label={t("editNamed", { name: product.name })}
+                        className={`inline-flex min-h-11 min-w-11 items-center justify-center text-[#f0c14a] ${FOCUS_RING}`}
+                      >
+                        <Pencil className="h-4 w-4" strokeWidth={1.8} aria-hidden="true" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setDeleteError(null);
+                          setPendingDelete(product);
+                        }}
+                        aria-label={t("deleteNamed", { name: product.name })}
+                        className={`inline-flex min-h-11 min-w-11 items-center justify-center text-muted ${FOCUS_RING}`}
+                      >
+                        <Trash2 className="h-4 w-4" strokeWidth={1.8} aria-hidden="true" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
 
       {active.status === "CanLoadMore" ? (
         <button
@@ -176,64 +214,12 @@ export function ProductsScreen() {
           const product = pendingDelete;
           setPendingDelete(null);
           if (!product) return;
+          if (editing?._id === product._id) setEditing(null);
           void removeProduct({ id: product._id })
             .then(() => setStatusMessage(t("deleted")))
             .catch(() => setDeleteError(t("deleteFailed")));
         }}
       />
     </div>
-  );
-}
-
-function ProductCard({
-  product,
-  onEdit,
-  onDelete,
-}: {
-  product: Doc<"foodProducts">;
-  onEdit: () => void;
-  onDelete: () => void;
-}) {
-  const t = useTranslations("food.products");
-  const nutrients = useTranslations("food.nutrients");
-  const titleId = `product-card-${product._id}`;
-  return (
-    <article aria-labelledby={titleId} className="rounded-card border border-line bg-surface p-3.5">
-      <h2 id={titleId} className="truncate text-[16px] font-bold text-ink">
-        {product.name}
-      </h2>
-      {product.barcode ? (
-        <p className="mt-0.5 text-[12px] text-muted">{product.barcode}</p>
-      ) : null}
-      <dl className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 sm:grid-cols-3">
-        {NUTRIENT_FIELD_KEYS.map((key) => (
-          <div key={key}>
-            <dt className="text-[11px] font-semibold text-muted">{nutrients(key)}</dt>
-            <dd className="text-sm text-ink">
-              {formatPer100g(product.per100g[key])}
-              <span className="text-muted"> {key === "kcal" ? t("unitKcal") : t("unitGrams")}</span>
-            </dd>
-          </div>
-        ))}
-      </dl>
-      <div className="mt-3 flex gap-2">
-        <button
-          type="button"
-          onClick={onEdit}
-          aria-label={t("editNamed", { name: product.name })}
-          className={`min-h-11 flex-1 rounded-xl bg-surface-2 text-sm font-bold text-ink ${FOCUS_RING}`}
-        >
-          {t("edit")}
-        </button>
-        <button
-          type="button"
-          onClick={onDelete}
-          aria-label={t("deleteNamed", { name: product.name })}
-          className={`min-h-11 flex-1 rounded-xl bg-surface-2 text-sm font-bold text-danger ${FOCUS_RING}`}
-        >
-          {t("delete")}
-        </button>
-      </div>
-    </article>
   );
 }

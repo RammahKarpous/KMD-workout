@@ -1,16 +1,14 @@
 "use client";
 
 import { useAction, useMutation } from "convex/react";
+import { ScanBarcode } from "lucide-react";
 import { useTranslations } from "next-intl";
 import dynamic from "next/dynamic";
-import { useId, useRef, useState, type ReactNode } from "react";
+import { useId, useState, type ReactNode } from "react";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import type { Nutrients } from "@/shared/lib/nutrients";
-import { SheetHeader } from "@/shared/ui/SheetHeader";
-import { useSheet } from "@/shared/ui/SheetHost";
-import { useFocusTrap } from "@/shared/ui/useFocusTrap";
-import { FIELD_CLASS, FOCUS_RING } from "./focus";
+import { FOCUS_RING, GHOST_BUTTON, LEGACY_FIELD, PRIMARY_BUTTON } from "./focus";
 import {
   NUTRIENT_FIELD_KEYS,
   emptyProductForm,
@@ -38,23 +36,32 @@ type ExistingProduct = {
   per100g: Nutrients;
 };
 
+const FIELD_LABEL: Record<NutrientFieldKey, "fieldKcal" | "fieldFat" | "fieldSaturated" | "fieldCarbs" | "fieldSugar" | "fieldProtein"> = {
+  kcal: "fieldKcal",
+  fat: "fieldFat",
+  saturatedFat: "fieldSaturated",
+  carbs: "fieldCarbs",
+  sugar: "fieldSugar",
+  protein: "fieldProtein",
+};
+
 export function ProductFormSheet({
   existing,
   onSaved,
+  onCancel,
 }: {
   existing?: ExistingProduct | null;
   onSaved: (message: string) => void;
+  onCancel?: () => void;
 }) {
   const t = useTranslations("food.products");
-  const nutrients = useTranslations("food.nutrients");
-  const { pop } = useSheet();
+  const common = useTranslations("common");
   const createProduct = useMutation(api.foodProducts.create);
   const updateProduct = useMutation(api.foodProducts.update);
   const lookup = useAction(api.openFoodFacts.lookup);
 
   const titleId = useId();
-  const panelRef = useRef<HTMLDivElement>(null);
-  useFocusTrap(true, panelRef);
+  const formId = useId();
 
   const [form, setForm] = useState<ProductFormInput>(() =>
     existing ? formFromProduct(existing) : emptyProductForm(),
@@ -100,7 +107,6 @@ export function ProductFormSheet({
         });
         onSaved(t("added"));
       }
-      pop();
     } catch (error) {
       setFormError(error instanceof Error ? error.message : t("saveFailed"));
     } finally {
@@ -130,131 +136,113 @@ export function ProductFormSheet({
   }
 
   return (
-    <div
-      ref={panelRef}
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby={titleId}
-      className="px-4 pb-6"
-      onKeyDown={(event) => {
-        if (event.key === "Escape") {
-          event.stopPropagation();
-          if (scanning) setScanning(false);
-          else pop();
-        }
-      }}
-    >
-      <SheetHeader
-        titleId={titleId}
-        title={existing ? t("editTitle") : t("createTitle")}
-        onClose={() => (scanning ? setScanning(false) : pop())}
-        closeIcon={scanning ? "back" : "x"}
-      />
+    <section aria-labelledby={titleId} className="rounded-2xl border border-line px-4 py-4">
+      <h1 id={titleId} className="mb-3 text-sm font-medium text-ink">
+        {existing ? t("editTitle") : t("cardTitle")}
+      </h1>
 
       {scanning ? (
-        <BarcodeScanner
-          busy={lookingUp}
-          error={scanError}
-          onCode={(code) => void lookupCode(code)}
-          onCameraError={() => setScanError(t("cameraFailed"))}
-          onClose={() => setScanning(false)}
-          onRetry={() => setScanError(null)}
-        />
-      ) : (
-        <form
-          className="flex flex-col gap-3"
-          noValidate
-          onSubmit={(event) => {
-            event.preventDefault();
-            void save();
-          }}
+        <div className="mb-3">
+          <BarcodeScanner
+            busy={lookingUp}
+            error={scanError}
+            onCode={(code) => void lookupCode(code)}
+            onCameraError={() => setScanError(t("cameraFailed"))}
+            onClose={() => setScanning(false)}
+            onRetry={() => setScanError(null)}
+          />
+        </div>
+      ) : null}
+
+      <form
+        id={formId}
+        className="flex flex-col gap-3"
+        noValidate
+        onSubmit={(event) => {
+          event.preventDefault();
+          void save();
+        }}
+      >
+        <Field
+          id={fieldDomId("name")}
+          label={t("nameLabel")}
+          error={errors.name ? t(errors.name) : undefined}
         >
-          <Field
+          <input
             id={fieldDomId("name")}
-            label={t("nameLabel")}
-            error={errors.name ? t(errors.name) : undefined}
-          >
+            value={form.name}
+            onChange={(event) => setField("name", event.target.value)}
+            autoComplete="off"
+            aria-invalid={errors.name ? true : undefined}
+            aria-describedby={errors.name ? errorId("name") : undefined}
+            className={LEGACY_FIELD}
+          />
+        </Field>
+
+        {NUTRIENT_FIELD_KEYS.map((key) => (
+          <Field key={key} id={fieldDomId(key)} label={t(FIELD_LABEL[key])} error={errors[key] ? t(errors[key]) : undefined}>
             <input
-              id={fieldDomId("name")}
-              data-autofocus
-              value={form.name}
-              onChange={(event) => setField("name", event.target.value)}
-              placeholder={t("namePlaceholder")}
+              id={fieldDomId(key)}
+              inputMode="decimal"
               autoComplete="off"
-              aria-invalid={errors.name ? true : undefined}
-              aria-describedby={errors.name ? errorId("name") : undefined}
-              className={FIELD_CLASS}
+              value={form[key]}
+              onChange={(event) => setField(key, event.target.value)}
+              aria-invalid={errors[key] ? true : undefined}
+              aria-describedby={errors[key] ? errorId(key) : undefined}
+              className={LEGACY_FIELD}
             />
           </Field>
+        ))}
 
-          <fieldset className="flex flex-col gap-3">
-            <legend className="mb-1 text-[12.5px] font-semibold text-muted">
-              {t("per100gLegend")}
-            </legend>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              {NUTRIENT_FIELD_KEYS.map((key) => (
-                <Field key={key} id={fieldDomId(key)} label={nutrients(key)} error={errors[key] ? t(errors[key]) : undefined}>
-                  <input
-                    id={fieldDomId(key)}
-                    inputMode="decimal"
-                    autoComplete="off"
-                    value={form[key]}
-                    onChange={(event) => setField(key, event.target.value)}
-                    aria-invalid={errors[key] ? true : undefined}
-                    aria-describedby={errors[key] ? errorId(key) : undefined}
-                    className={FIELD_CLASS}
-                  />
-                </Field>
-              ))}
-            </div>
-          </fieldset>
-
-          <Field
+        <Field
+          id={fieldDomId("barcode")}
+          label={t("barcodeLabel")}
+          hint={t("barcodeHint")}
+          error={errors.barcode ? t(errors.barcode) : undefined}
+        >
+          <input
             id={fieldDomId("barcode")}
-            label={t("barcodeLabel")}
-            hint={t("barcodeHint")}
-            error={errors.barcode ? t(errors.barcode) : undefined}
-          >
-            <input
-              id={fieldDomId("barcode")}
-              inputMode="numeric"
-              autoComplete="off"
-              spellCheck={false}
-              value={form.barcode}
-              onChange={(event) => setField("barcode", event.target.value)}
-              placeholder={t("barcodePlaceholder")}
-              aria-invalid={errors.barcode ? true : undefined}
-              aria-describedby={describedBy("barcode", Boolean(errors.barcode), true)}
-              className={FIELD_CLASS}
-            />
-          </Field>
+            inputMode="numeric"
+            autoComplete="off"
+            spellCheck={false}
+            value={form.barcode}
+            onChange={(event) => setField("barcode", event.target.value)}
+            placeholder={t("barcodePlaceholder")}
+            aria-invalid={errors.barcode ? true : undefined}
+            aria-describedby={describedBy("barcode", Boolean(errors.barcode), true)}
+            className={LEGACY_FIELD}
+          />
+        </Field>
 
-          {formError ? (
-            <p role="alert" className="text-sm text-danger">
-              {formError}
-            </p>
-          ) : null}
+        {formError ? (
+          <p role="alert" className="text-sm text-danger">
+            {formError}
+          </p>
+        ) : null}
+      </form>
 
-          <button
-            type="button"
-            onClick={() => {
-              setScanError(null);
-              setScanning(true);
-            }}
-            className={`rounded-xl border border-line bg-surface py-3 text-sm font-bold text-ink ${FOCUS_RING}`}
-          >
-            {t("scan")}
+      <div className="mt-3 flex flex-col gap-3">
+        <button
+          type="button"
+          onClick={() => {
+            setScanError(null);
+            setScanning((open) => !open);
+          }}
+          className={GHOST_BUTTON}
+        >
+          <ScanBarcode className="mr-2 h-4 w-4" strokeWidth={1.8} aria-hidden="true" />
+          {scanning ? t("closeScanner") : t("scan")}
+        </button>
+        <button type="submit" form={formId} disabled={saving} className={PRIMARY_BUTTON}>
+          {existing ? t("saveEdit") : t("saveCreate")}
+        </button>
+        {existing && onCancel ? (
+          <button type="button" onClick={onCancel} className={`text-sm font-semibold text-muted ${FOCUS_RING}`}>
+            {common("cancel")}
           </button>
-          <button
-            type="submit"
-            disabled={saving}
-            className={`rounded-2xl bg-blue py-4 text-[15.5px] font-bold text-black disabled:opacity-60 ${FOCUS_RING}`}
-          >
-            {existing ? t("saveEdit") : t("saveCreate")}
-          </button>
-        </form>
-      )}
-    </div>
+        ) : null}
+      </div>
+    </section>
   );
 }
 

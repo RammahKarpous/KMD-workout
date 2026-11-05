@@ -6,12 +6,10 @@ import { useEffect, useId, useRef, useState } from "react";
 import { api } from "@/convex/_generated/api";
 import type { Doc, Id } from "@/convex/_generated/dataModel";
 import { FOOD_CATEGORIES, FOOD_MOMENTS, type FoodCategory, type FoodMoment } from "@/shared/lib/food";
-import { SheetHeader } from "@/shared/ui/SheetHeader";
-import { useSheet } from "@/shared/ui/SheetHost";
-import { useFocusTrap } from "@/shared/ui/useFocusTrap";
 import { productQuery, productSummary } from "@/features/food/products/productForm";
-import { FIELD_CLASS, FOCUS_RING } from "@/features/food/products/focus";
+import { FOCUS_RING, LEGACY_FIELD, PRIMARY_BUTTON } from "@/features/food/products/focus";
 import {
+  isDiaryDate,
   portionKind,
   validateEntryForm,
   type EntryFormErrors,
@@ -31,24 +29,24 @@ export type DiaryEntryDraft = {
   ml?: number;
 };
 
-export function EntryFormSheet({
+export function DiaryEntryForm({
   date,
   existing,
   onSaved,
+  onCancel,
 }: {
   date: string;
   existing?: DiaryEntryDraft | null;
   onSaved: (message: string) => void;
+  onCancel?: () => void;
 }) {
   const t = useTranslations("food.diary");
+  const common = useTranslations("common");
   const moments = useTranslations("food.moments");
   const categories = useTranslations("food.categories");
-  const { pop } = useSheet();
   const addEntry = useMutation(api.foodEntries.add);
   const updateEntry = useMutation(api.foodEntries.update);
   const titleId = useId();
-  const panelRef = useRef<HTMLDivElement>(null);
-  useFocusTrap(true, panelRef);
 
   const initialAmount = existing
     ? String(existing.category === "vocht" ? (existing.ml ?? "") : (existing.grams ?? ""))
@@ -64,8 +62,10 @@ export function EntryFormSheet({
   const [saving, setSaving] = useState(false);
 
   const drink = portionKind(category) === "ml";
+  const dateReady = isDiaryDate(date);
 
   async function save() {
+    if (!dateReady) return;
     const result = validateEntryForm({
       moment,
       category,
@@ -75,7 +75,7 @@ export function EntryFormSheet({
     });
     if (!result.ok) {
       setErrors(result.errors);
-      const first = (["moment", "category", "productId", "amount"] as const).find((key) => result.errors[key]);
+      const first = (["moment", "productId", "amount", "category"] as const).find((key) => result.errors[key]);
       if (first) document.getElementById(fieldId(first))?.focus();
       return;
     }
@@ -105,7 +105,6 @@ export function EntryFormSheet({
         });
         onSaved(t("added"));
       }
-      pop();
     } catch (error) {
       setFormError(error instanceof Error ? error.message : t("saveFailed"));
     } finally {
@@ -114,116 +113,101 @@ export function EntryFormSheet({
   }
 
   return (
-    <div
-      ref={panelRef}
-      role="dialog"
-      aria-modal="true"
+    <form
+      className="flex flex-col gap-3"
+      noValidate
       aria-labelledby={titleId}
-      className="px-4 pb-6"
-      onKeyDown={(event) => {
-        if (event.key === "Escape") {
-          event.stopPropagation();
-          pop();
-        }
+      onSubmit={(event) => {
+        event.preventDefault();
+        void save();
       }}
     >
-      <SheetHeader
-        titleId={titleId}
-        title={existing ? t("editTitle") : t("createTitle")}
-        onClose={pop}
+      <h1 id={titleId} className="text-sm font-medium text-ink">
+        {existing ? t("editTitle") : t("prompt")}
+      </h1>
+      <SelectField
+        id={fieldId("moment")}
+        label={t("momentLabel")}
+        value={moment}
+        placeholder={t("momentPlaceholder")}
+        error={errors.moment ? t(errors.moment) : undefined}
+        onChange={setMoment}
+        options={FOOD_MOMENTS.map((value) => ({ value, label: moments(value) }))}
       />
-      <form
-        className="flex flex-col gap-3"
-        noValidate
-        onSubmit={(event) => {
-          event.preventDefault();
-          void save();
+      <ProductPicker
+        selectedId={productId}
+        selectedName={productName}
+        error={errors.productId ? t(errors.productId) : undefined}
+        onSelect={(product) => {
+          setProductId(product._id);
+          setProductName(product.name);
+          setErrors((current) => ({ ...current, productId: undefined }));
         }}
-      >
-        <SelectField
-          id={fieldId("moment")}
-          label={t("momentLabel")}
-          value={moment}
-          placeholder={t("momentPlaceholder")}
-          error={errors.moment ? t(errors.moment) : undefined}
-          onChange={setMoment}
-          options={FOOD_MOMENTS.map((value) => ({ value, label: moments(value) }))}
+        onClear={() => {
+          setProductId(null);
+          setProductName("");
+        }}
+      />
+      <div>
+        <label htmlFor={fieldId("amount")} className="sr-only">
+          {drink ? t("amountMl") : t("amountGrams")}
+        </label>
+        <input
+          id={fieldId("amount")}
+          inputMode="decimal"
+          autoComplete="off"
+          value={amount}
+          placeholder={drink ? t("amountPlaceholderMl") : t("amountPlaceholder")}
+          onChange={(event) => setAmount(event.target.value)}
+          aria-invalid={errors.amount ? true : undefined}
+          aria-describedby={errors.amount ? errorDomId("amount") : undefined}
+          className={LEGACY_FIELD}
         />
-        <SelectField
-          id={fieldId("category")}
-          label={t("categoryLabel")}
-          value={category}
-          placeholder={t("categoryPlaceholder")}
-          error={errors.category ? t(errors.category) : undefined}
-          onChange={(next) => {
-            setCategory(next);
-            if (next !== "vlees") setIsRedMeat(false);
-          }}
-          options={FOOD_CATEGORIES.map((value) => ({ value, label: categories(value) }))}
-        />
-        {category === "vlees" ? (
-          <label className="flex min-h-11 items-center gap-2.5 text-sm text-ink">
-            <input
-              type="checkbox"
-              checked={isRedMeat}
-              onChange={(event) => setIsRedMeat(event.target.checked)}
-              className={`h-5 w-5 accent-blue ${FOCUS_RING}`}
-            />
-            {t("redMeatToggle")}
-          </label>
-        ) : null}
-
-        <ProductPicker
-          selectedId={productId}
-          selectedName={productName}
-          error={errors.productId ? t(errors.productId) : undefined}
-          onSelect={(product) => {
-            setProductId(product._id);
-            setProductName(product.name);
-            setErrors((current) => ({ ...current, productId: undefined }));
-          }}
-          onClear={() => {
-            setProductId(null);
-            setProductName("");
-          }}
-        />
-
-        <div>
-          <label htmlFor={fieldId("amount")} className="mb-1.5 block text-[12.5px] font-semibold text-muted">
-            {drink ? t("amountMl") : t("amountGrams")}
-          </label>
-          <input
-            id={fieldId("amount")}
-            inputMode="decimal"
-            autoComplete="off"
-            value={amount}
-            onChange={(event) => setAmount(event.target.value)}
-            aria-invalid={errors.amount ? true : undefined}
-            aria-describedby={errors.amount ? errorDomId("amount") : undefined}
-            className={FIELD_CLASS}
-          />
-          {errors.amount ? (
-            <p id={errorDomId("amount")} className="mt-1.5 text-[12.5px] text-danger">
-              {t(errors.amount)}
-            </p>
-          ) : null}
-        </div>
-
-        {formError ? (
-          <p role="alert" className="text-sm text-danger">
-            {formError}
+        {errors.amount ? (
+          <p id={errorDomId("amount")} className="mt-1.5 text-[12.5px] text-danger">
+            {t(errors.amount)}
           </p>
         ) : null}
+      </div>
+      <SelectField
+        id={fieldId("category")}
+        label={t("categoryLabel")}
+        value={category}
+        placeholder={t("categoryPlaceholder")}
+        error={errors.category ? t(errors.category) : undefined}
+        onChange={(next) => {
+          setCategory(next);
+          if (next !== "vlees") setIsRedMeat(false);
+        }}
+        options={FOOD_CATEGORIES.map((value) => ({ value, label: categories(value) }))}
+      />
+      {category === "vlees" ? (
+        <label className="flex min-h-11 items-center gap-2.5 text-sm text-ink">
+          <input
+            type="checkbox"
+            checked={isRedMeat}
+            onChange={(event) => setIsRedMeat(event.target.checked)}
+            className={`h-5 w-5 accent-blue ${FOCUS_RING}`}
+          />
+          {t("redMeatToggle")}
+        </label>
+      ) : null}
 
-        <button
-          type="submit"
-          disabled={saving}
-          className={`rounded-2xl bg-blue py-4 text-[15.5px] font-bold text-black disabled:opacity-60 ${FOCUS_RING}`}
-        >
-          {existing ? t("saveEdit") : t("saveCreate")}
+      {formError ? (
+        <p role="alert" className="text-sm text-danger">
+          {formError}
+        </p>
+      ) : null}
+
+      <button type="submit" disabled={saving || !dateReady} className={PRIMARY_BUTTON}>
+        {existing ? t("saveEdit") : t("saveCreate")}
+      </button>
+      {existing && onCancel ? (
+        <button type="button" onClick={onCancel} className={`min-h-11 text-sm font-semibold text-muted ${FOCUS_RING}`}>
+          {common("cancel")}
         </button>
-      </form>
-    </div>
+      ) : null}
+    </form>
   );
 }
 
@@ -242,8 +226,9 @@ function ProductPicker({
 }) {
   const [search, setSearch] = useState("");
   const [debounced, setDebounced] = useState("");
+  const [open, setOpen] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const searchRef = useRef<HTMLInputElement>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
   const t = useTranslations("food.diary");
   const productText = useTranslations("food.products");
 
@@ -272,82 +257,85 @@ function ProductPicker({
         ? "loading-more"
         : "ready";
 
+  const summary = productSummary({
+    query: plan.mode === "search" ? plan.query : "",
+    count: active.results.length,
+    status: summaryStatus,
+    canLoadMore: active.status === "CanLoadMore" || active.status === "LoadingMore",
+  });
+
   return (
-    <div>
-      <label htmlFor={fieldId("productId")} className="mb-1.5 block text-[12.5px] font-semibold text-muted">
+    <div
+      ref={rootRef}
+      onBlur={(event) => {
+        if (!rootRef.current?.contains(event.relatedTarget as Node | null)) setOpen(false);
+      }}
+    >
+      <label htmlFor={fieldId("productId")} className="sr-only">
         {t("productLabel")}
       </label>
-      {selectedId && selectedName ? (
-        <p className="mb-2 flex items-center justify-between gap-2 rounded-xl border border-line bg-surface px-3 py-2 text-sm text-ink">
-          <span>
-            {t("selectedProduct")}: {selectedName}
-          </span>
-          <button
-            type="button"
-            onClick={() => {
-              onClear();
-              searchRef.current?.focus();
-            }}
-            className={`shrink-0 font-semibold text-blue underline ${FOCUS_RING}`}
-          >
-            {t("clearProduct")}
-          </button>
-        </p>
-      ) : null}
       <input
-        ref={searchRef}
         id={fieldId("productId")}
         type="search"
-        value={search}
+        role="combobox"
+        aria-expanded={open}
+        aria-controls="entry-product-results"
+        aria-autocomplete="list"
+        value={search === "" ? selectedName : search}
         maxLength={64}
         autoComplete="off"
         placeholder={t("productPlaceholder")}
         aria-invalid={error ? true : undefined}
         aria-describedby={error ? errorDomId("productId") : "entry-product-summary"}
-        aria-controls="entry-product-results"
+        onFocus={() => setOpen(true)}
         onChange={(event) => {
           const next = event.target.value;
           setSearch(next);
+          if (selectedId) onClear();
+          setOpen(true);
           if (timer.current) clearTimeout(timer.current);
           timer.current = setTimeout(() => setDebounced(next), SEARCH_DELAY_MS);
         }}
-        className={FIELD_CLASS}
+        className={LEGACY_FIELD}
       />
-      <p id="entry-product-summary" aria-live="polite" className="mt-1.5 text-[12.5px] text-muted">
-        {(() => {
-          const summary = productSummary({
-            query: plan.mode === "search" ? plan.query : "",
-            count: active.results.length,
-            status: summaryStatus,
-            canLoadMore: active.status === "CanLoadMore" || active.status === "LoadingMore",
-          });
-          return productText(summary.key, summary.values);
-        })()}
+      <p id="entry-product-summary" aria-live="polite" className="sr-only">
+        {productText(summary.key, summary.values)}
       </p>
-      <ul id="entry-product-results" aria-label={t("productLabel")} className="mt-2 flex max-h-48 flex-col gap-1 overflow-y-auto">
-        {active.results.map((product) => (
-          <li key={product._id}>
+      {open ? (
+        <div className="mt-2 rounded-md border border-line bg-black">
+          <ul id="entry-product-results" aria-label={t("productLabel")} className="flex max-h-48 flex-col overflow-y-auto">
+            {active.results.map((product) => (
+              <li key={product._id} className="border-b border-line last:border-b-0">
+                <button
+                  type="button"
+                  aria-pressed={product._id === selectedId}
+                  onMouseDown={(event) => event.preventDefault()}
+                  onClick={() => {
+                    onSelect(product);
+                    setSearch("");
+                    setDebounced("");
+                    setOpen(false);
+                  }}
+                  className={`min-h-11 w-full px-3 text-left text-sm ${
+                    product._id === selectedId ? "bg-blue font-semibold text-black" : "text-ink"
+                  } ${FOCUS_RING}`}
+                >
+                  {product.name}
+                </button>
+              </li>
+            ))}
+          </ul>
+          {active.status === "CanLoadMore" ? (
             <button
               type="button"
-              aria-pressed={product._id === selectedId}
-              onClick={() => onSelect(product)}
-              className={`min-h-11 w-full rounded-xl px-3 text-left text-sm font-semibold ${
-                product._id === selectedId ? "bg-blue text-black" : "bg-surface-2 text-ink"
-              } ${FOCUS_RING}`}
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={() => active.loadMore(PAGE_SIZE)}
+              className={`min-h-11 w-full border-t border-line text-sm font-bold text-blue ${FOCUS_RING}`}
             >
-              {product.name}
+              {t("loadMore")}
             </button>
-          </li>
-        ))}
-      </ul>
-      {active.status === "CanLoadMore" ? (
-        <button
-          type="button"
-          onClick={() => active.loadMore(PAGE_SIZE)}
-          className={`mt-2 w-full rounded-xl bg-surface py-2 text-sm font-bold text-blue ${FOCUS_RING}`}
-        >
-          {t("loadMore")}
-        </button>
+          ) : null}
+        </div>
       ) : null}
       {error ? (
         <p id={errorDomId("productId")} className="mt-1.5 text-[12.5px] text-danger">
@@ -378,17 +366,16 @@ function SelectField({
   const errorId = `${id}-error`;
   return (
     <div>
-      <label htmlFor={id} className="mb-1.5 block text-[12.5px] font-semibold text-muted">
+      <label htmlFor={id} className="sr-only">
         {label}
       </label>
       <select
         id={id}
-        data-autofocus={id === "entry-moment" ? true : undefined}
         value={value}
         onChange={(event) => onChange(event.target.value)}
         aria-invalid={error ? true : undefined}
         aria-describedby={error ? errorId : undefined}
-        className={FIELD_CLASS}
+        className={LEGACY_FIELD}
       >
         <option value="">{placeholder}</option>
         {options.map((option) => (
