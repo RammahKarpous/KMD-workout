@@ -39,3 +39,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Laravel dumps hold personal data. The synthetic fixture is the only SQL we keep.
+*.sql
+!scripts/legacy/fixture.sql
+scripts/legacy/out/

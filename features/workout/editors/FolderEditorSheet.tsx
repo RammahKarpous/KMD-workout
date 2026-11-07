@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation } from "convex/react";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
@@ -19,13 +20,14 @@ export function FolderEditorSheet({
   const updateFolder = useMutation(api.workout.updateFolder);
   const deleteFolder = useMutation(api.workout.deleteFolder);
 
+  const t = useTranslations("workout");
   const [name, setName] = useState(existing?.name ?? "");
   const [alert, setAlert] = useState<string | null>(null);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
 
   async function save() {
     if (!name.trim()) {
-      setAlert("Give your folder a name.");
+      setAlert(t("folderNameRequired"));
       return;
     }
     if (existing) {
@@ -38,15 +40,15 @@ export function FolderEditorSheet({
 
   return (
     <div className="p-4">
-      <SheetHeader title={existing ? "Folder" : "New folder"} onClose={pop} />
+      <SheetHeader title={existing ? t("folderTitle") : t("newFolderTitle")} onClose={pop} />
 
       <div className="mb-4">
         <label className="mb-1.5 block text-[12.5px] font-semibold text-muted">
-          Folder name
+          {t("folderName")}
         </label>
         <input
           autoFocus
-          placeholder="e.g. Boek"
+          placeholder={t("folderPlaceholder")}
           value={name}
           onChange={(e) => setName(e.target.value)}
           className="w-full rounded-xl border border-line bg-surface px-3.5 py-3 text-base text-ink outline-none focus:border-blue"
@@ -58,7 +60,7 @@ export function FolderEditorSheet({
         onClick={save}
         className="w-full rounded-2xl bg-blue py-4 text-[15.5px] font-bold text-white"
       >
-        Save folder
+        {t("saveFolder")}
       </button>
 
       {existing && (
@@ -67,14 +69,14 @@ export function FolderEditorSheet({
           onClick={() => setConfirmingDelete(true)}
           className="mx-auto mt-4.5 block text-[15px] font-semibold text-danger"
         >
-          Delete folder
+          {t("deleteFolder")}
         </button>
       )}
 
       <ConfirmDialog
         open={confirmingDelete}
         danger
-        message={`Delete "${existing?.name}"? The routines inside stay — they just move out of the folder.`}
+        message={t("deleteFolderConfirm", { name: existing?.name ?? "" })}
         onCancel={() => setConfirmingDelete(false)}
         onConfirm={async () => {
           setConfirmingDelete(false);

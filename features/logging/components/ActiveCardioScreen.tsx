@@ -1,27 +1,32 @@
 "use client";
 
 import { useMutation } from "convex/react";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { CARDIO } from "@/features/exercises/library/library";
+import { intensityKey } from "@/features/logging/intensity";
 import { Chip } from "@/shared/ui/Chip";
 import { ClockIcon } from "@/shared/ui/icons";
 import { SheetHeader } from "@/shared/ui/SheetHeader";
 import { useSheet } from "@/shared/ui/SheetHost";
 import { WorkoutSummaryScreen } from "./WorkoutSummaryScreen";
 
-const INTENSITIES = ["Easy (conversational)", "Moderate", "Hard"];
+const INTENSITIES = ["Easy (conversational)", "Moderate", "Hard"] as const;
 
 export function ActiveCardioScreen() {
   const { closeAll } = useSheet();
+  const t = useTranslations("logging");
+  const cardioLabel = useTranslations("cardio");
+  const intensityLabel = useTranslations("intensity");
   const finishCardioSession = useMutation(api.logging.finishCardioSession);
   const updateSessionNotes = useMutation(api.logging.updateSessionNotes);
 
   const [startTs] = useState(() => Date.now());
   const [cardioType, setCardioType] = useState(CARDIO[0]);
   const [duration, setDuration] = useState("25");
-  const [intensity, setIntensity] = useState(INTENSITIES[0]);
+  const [intensity, setIntensity] = useState<(typeof INTENSITIES)[number]>(INTENSITIES[0]);
   const [phase, setPhase] = useState<"log" | "summary">("log");
   const [notes, setNotes] = useState("");
   const [sessionId, setSessionId] = useState<Id<"sessions"> | null>(null);
@@ -50,9 +55,9 @@ export function ActiveCardioScreen() {
       <WorkoutSummaryScreen
         title={cardioType}
         stats={[
-          { label: "Duration", value: `${Number(duration) || 0} min`, accent: true },
-          { label: "Type", value: cardioType },
-          { label: "Intensity", value: intensity.replace(" (conversational)", "") },
+          { label: t("duration"), value: t("minutesValue", { count: Number(duration) || 0 }), accent: true },
+          { label: t("type"), value: cardioLabel(cardioType as "Walking") },
+          { label: t("intensity"), value: intensityLabel(intensityKey(intensity)) },
         ]}
         notes={notes}
         onNotesChange={setNotes}
@@ -65,7 +70,7 @@ export function ActiveCardioScreen() {
   return (
     <div className="p-4">
       <SheetHeader
-        title="Cardio"
+        title={t("cardio")}
         onClose={closeAll}
         right={
           <button
@@ -74,19 +79,19 @@ export function ActiveCardioScreen() {
             disabled={finishing}
             className="text-[15px] font-bold text-blue disabled:opacity-50"
           >
-            Finish
+            {t("finish")}
           </button>
         }
       />
 
       <div className="mb-4">
         <label className="mb-2 block text-[12.5px] font-semibold text-muted">
-          What are you doing?
+          {t("whatDoing")}
         </label>
         <div className="flex flex-wrap gap-2">
           {CARDIO.map((c) => (
             <Chip key={c} active={c === cardioType} onClick={() => setCardioType(c)}>
-              {c}
+              {cardioLabel(c as "Walking")}
             </Chip>
           ))}
         </div>
@@ -94,7 +99,7 @@ export function ActiveCardioScreen() {
 
       <div className="mb-4">
         <label className="mb-1.5 block text-[12.5px] font-semibold text-muted">
-          Duration (minutes)
+          {t("durationMinutes")}
         </label>
         <input
           type="number"
@@ -108,12 +113,12 @@ export function ActiveCardioScreen() {
 
       <div className="mb-4">
         <label className="mb-2 block text-[12.5px] font-semibold text-muted">
-          Intensity
+          {t("intensity")}
         </label>
         <div className="flex flex-wrap gap-2">
           {INTENSITIES.map((l) => (
             <Chip key={l} small active={l === intensity} onClick={() => setIntensity(l)}>
-              {l}
+              {intensityLabel(intensityKey(l))}
             </Chip>
           ))}
         </div>
@@ -122,11 +127,7 @@ export function ActiveCardioScreen() {
       {cardioType === "StairMaster" && (
         <div className="mt-3 flex gap-3 rounded-card border border-line bg-surface p-4 text-[13.5px] leading-snug text-muted">
           <ClockIcon />
-          <span>
-            Around 20–30 min at a conversational pace keeps stress low.
-            Feeling wound up rather than tired? It&rsquo;s fine to stop
-            earlier.
-          </span>
+          <span>{t("stairNote")}</span>
         </div>
       )}
     </div>

@@ -1,27 +1,49 @@
 "use client";
 
 import { useQuery } from "convex/react";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { api } from "@/convex/_generated/api";
 import { epley1RM } from "@/shared/lib/epley";
-import { formatFullDate } from "@/shared/lib/date";
+import { useDateText } from "@/features/i18n/useDateText";
 import { BackIcon } from "@/shared/ui/icons";
 import { Chip } from "@/shared/ui/Chip";
 import { SetTable } from "@/shared/ui/SetTable";
 import { exInfo } from "../library/exInfo";
-import { CARDIO, muscleLabel } from "../library/library";
+import { CARDIO } from "../library/library";
 import { useExerciseHistory } from "../hooks/useExerciseHistory";
 import { BodyMap } from "./BodyMap";
 import { ExerciseThumb } from "./ExerciseThumb";
 
 type Tab = "summary" | "history" | "muscles";
-const TABS: { id: Tab; label: string }[] = [
-  { id: "summary", label: "Summary" },
-  { id: "history", label: "History" },
-  { id: "muscles", label: "Muscles" },
+const TABS: { id: Tab; label: "summary" | "history" | "muscles" }[] = [
+  { id: "summary", label: "summary" },
+  { id: "history", label: "history" },
+  { id: "muscles", label: "muscles" },
 ];
+
+const TAXONOMY_KEYS = new Set([
+  "Upper body",
+  "Posterior chain",
+  "Full body",
+  "Lower body",
+  "Core",
+  "Neck",
+  "Custom",
+  "Push",
+  "Pull",
+  "Hinge",
+  "Squat",
+  "Isolation",
+  "Carry",
+  "Olympic",
+]);
+
+function labelTaxonomy(t: (key: "Core") => string, value: string): string {
+  return TAXONOMY_KEYS.has(value) ? t(value as "Core") : value;
+}
 
 function prRow(label: string, value: string) {
   return (
@@ -48,6 +70,9 @@ export function ExerciseDetailTabs({
   onBack?: () => void;
 }) {
   const router = useRouter();
+  const t = useTranslations("exercises");
+  const common = useTranslations("common");
+  const cardio = useTranslations("cardio");
   const [tab, setTab] = useState<Tab>("summary");
   const history = useExerciseHistory(name);
   const customExercises = useQuery(api.exercises.listCustomExercises) ?? [];
@@ -65,24 +90,26 @@ export function ExerciseDetailTabs({
         className="mb-2 -ml-1.5 flex items-center gap-1 rounded-lg px-1.5 py-2 text-[15px] font-semibold text-muted"
       >
         <BackIcon />
-        Back
+        {common("back")}
       </button>
 
       <div className="mb-4 flex items-center gap-3">
         <ExerciseThumb name={name} />
-        <h1 className="text-[22px] font-extrabold tracking-tight">{name}</h1>
+        <h1 className="text-[22px] font-extrabold tracking-tight">
+          {isCardio ? cardio(name as "Walking") : name}
+        </h1>
       </div>
 
       <div className="mb-4 flex gap-2">
-        {TABS.map((t) => (
-          <Chip key={t.id} small active={tab === t.id} onClick={() => setTab(t.id)}>
-            {t.label}
+        {TABS.map((item) => (
+          <Chip key={item.id} small active={tab === item.id} onClick={() => setTab(item.id)}>
+            {t(item.label)}
           </Chip>
         ))}
       </div>
 
       {tab === "summary" && (
-        <SummaryTab name={name} isCardio={isCardio} history={history} />
+        <SummaryTab isCardio={isCardio} history={history} />
       )}
       {tab === "history" && <HistoryTab history={history} />}
       {tab === "muscles" && (
@@ -93,14 +120,13 @@ export function ExerciseDetailTabs({
 }
 
 function SummaryTab({
-  name,
   isCardio,
   history,
 }: {
-  name: string;
   isCardio: boolean;
   history: ReturnType<typeof useExerciseHistory>;
 }) {
+  const t = useTranslations("exercises");
   if (history === undefined) {
     return <div className="h-32 animate-pulse rounded-card bg-surface" />;
   }
@@ -119,12 +145,12 @@ function SummaryTab({
     }
     return (
       <div>
-        {prRow("Sessions logged", `${matches.length}`)}
-        {prRow("Longest session", longest ? `${longest} min` : "–")}
-        {prRow("Total time", totalMin ? `${totalMin} min` : "–")}
+        {prRow(t("sessionsLogged"), `${matches.length}`)}
+        {prRow(t("longestSession"), longest ? t("minutesValue", { count: longest }) : "–")}
+        {prRow(t("totalTime"), totalMin ? t("minutesValue", { count: totalMin }) : "–")}
         {!scannedAll && (
           <p className="mt-3 text-[12px] text-muted-2">
-            Showing your most recent sessions.
+            {t("recent")}
           </p>
         )}
       </div>
@@ -135,9 +161,9 @@ function SummaryTab({
     return (
       <div className="py-8 text-center text-[14px] text-muted-2">
         <span className="mb-1.5 block text-lg font-bold text-muted">
-          No records yet.
+          {t("noRecords")}
         </span>
-        Log this exercise a few times and your personal records show up here.
+        {t("noRecordsBody")}
       </div>
     );
   }
@@ -168,16 +194,16 @@ function SummaryTab({
   return (
     <div>
       <div className="mb-1 mt-1 text-[12.5px] font-bold uppercase tracking-wide text-muted">
-        Personal records
+        {t("records")}
       </div>
-      {prRow("Heaviest weight", heaviest ? `${heaviest} kg` : "–")}
-      {prRow("Best 1RM (est.)", best1rm ? `${Math.round(best1rm * 10) / 10} kg` : "–")}
-      {prRow("Best set volume", bestSetVol ? `${Math.round(bestSetVol * 10) / 10} kg` : "–")}
-      {prRow("Best session volume", bestSessVol ? `${Math.round(bestSessVol * 10) / 10} kg` : "–")}
-      {prRow("Times logged", `${matches.length}`)}
+      {prRow(t("heaviest"), heaviest ? t("kgValue", { amount: heaviest }) : "–")}
+      {prRow(t("best1rm"), best1rm ? t("kgValue", { amount: Math.round(best1rm * 10) / 10 }) : "–")}
+      {prRow(t("bestSetVolume"), bestSetVol ? t("kgValue", { amount: Math.round(bestSetVol * 10) / 10 }) : "–")}
+      {prRow(t("bestSessionVolume"), bestSessVol ? t("kgValue", { amount: Math.round(bestSessVol * 10) / 10 }) : "–")}
+      {prRow(t("timesLogged"), `${matches.length}`)}
       {!scannedAll && (
         <p className="mt-3 text-[12px] text-muted-2">
-          Showing your most recent sessions.
+          {t("recent")}
         </p>
       )}
     </div>
@@ -189,6 +215,9 @@ function HistoryTab({
 }: {
   history: ReturnType<typeof useExerciseHistory>;
 }) {
+  const t = useTranslations("exercises");
+  const logging = useTranslations("logging");
+  const dates = useDateText();
   if (history === undefined) {
     return <div className="h-32 animate-pulse rounded-card bg-surface" />;
   }
@@ -197,9 +226,9 @@ function HistoryTab({
     return (
       <div className="py-8 text-center text-[14px] text-muted-2">
         <span className="mb-1.5 block text-lg font-bold text-muted">
-          No history yet.
+          {t("noHistory")}
         </span>
-        Once you log this exercise, every session shows up here.
+        {t("noHistoryBody")}
       </div>
     );
   }
@@ -214,10 +243,10 @@ function HistoryTab({
         >
           <div className="mb-2 flex items-center justify-between">
             <span className="text-[14.5px] font-bold text-ink">
-              {m.routineName ?? "Workout"}
+              {m.routineName ?? logging("defaultTitle")}
             </span>
             <span className="text-[12px] text-muted-2">
-              {formatFullDate(m.ts)}
+              {dates.formatFullDate(m.ts)}
             </span>
           </div>
           <SetTable sets={m.sets} cardio={m.cardio} />
@@ -234,14 +263,17 @@ function MusclesTab({
   name: string;
   customByName: Record<string, { primaryMuscle: string }>;
 }) {
+  const t = useTranslations("exercises");
+  const muscles = useTranslations("muscles");
+  const taxonomy = useTranslations("taxonomy");
   const info = exInfo(name, customByName);
 
   return (
     <div>
       {info && (
         <div className="mb-1 text-center text-[13px] text-muted-2">
-          {info.region} &middot; {info.mv} &middot;{" "}
-          {info.t === "compound" ? "Compound" : info.t === "isolation" ? "Isolation" : "—"}
+          {labelTaxonomy(taxonomy, info.region)} &middot; {labelTaxonomy(taxonomy, info.mv)} &middot;{" "}
+          {info.t === "compound" ? t("compound") : info.t === "isolation" ? t("isolation") : "—"}
         </div>
       )}
       <BodyMap mode="roles" primary={info?.p ?? []} secondary={info?.s ?? []} />
@@ -249,7 +281,7 @@ function MusclesTab({
       {info && info.p.length > 0 && (
         <>
           <div className="mb-2 mt-4 text-[12.5px] font-bold uppercase tracking-wide text-muted">
-            Primary
+            {t("primary")}
           </div>
           <div className="mb-2 flex flex-wrap gap-2">
             {info.p.map((id) => (
@@ -257,7 +289,7 @@ function MusclesTab({
                 key={id}
                 className="rounded-full bg-blue px-3.5 py-1.5 text-[13px] font-semibold text-white"
               >
-                {muscleLabel(id)}
+                {muscles(id as "chest")}
               </span>
             ))}
           </div>
@@ -267,7 +299,7 @@ function MusclesTab({
       {info && info.s.length > 0 && (
         <>
           <div className="mb-2 mt-4 text-[12.5px] font-bold uppercase tracking-wide text-muted">
-            Secondary
+            {t("secondary")}
           </div>
           <div className="flex flex-wrap gap-2">
             {info.s.map((id) => (
@@ -275,7 +307,7 @@ function MusclesTab({
                 key={id}
                 className="rounded-full border border-orange bg-orange/[0.18] px-3.5 py-1.5 text-[13px] font-semibold text-orange"
               >
-                {muscleLabel(id)}
+                {muscles(id as "chest")}
               </span>
             ))}
           </div>
@@ -284,7 +316,7 @@ function MusclesTab({
 
       {!info && (
         <div className="mt-4 text-center text-[13px] text-muted-2">
-          No muscle data for this exercise.
+          {t("noMuscle")}
         </div>
       )}
     </div>

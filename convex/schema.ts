@@ -36,6 +36,8 @@ const loggedExercise = v.object({
 });
 
 export default defineSchema({
+  // Convex Auth already indexes `users.email` (index name `email`).
+  // The legacy import looks accounts up by that index; don't drop it.
   ...authTables,
 
   // --- workout: folders + routines ---

@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { CloseIcon } from "@/shared/ui/icons";
 
@@ -18,6 +19,8 @@ function isStandalone() {
 
 export function InstallPrompt() {
   const [visible, setVisible] = useState(false);
+  const t = useTranslations("install");
+  const common = useTranslations("common");
 
   useEffect(() => {
     if (isStandalone()) return;
@@ -34,16 +37,10 @@ export function InstallPrompt() {
       style={{ paddingTop: "max(12px, env(safe-area-inset-top))" }}
     >
       <div className="flex w-full max-w-130 items-start gap-3 rounded-2xl border border-line bg-surface p-4 shadow-[0_10px_34px_rgba(0,0,0,0.55)]">
-        <p className="flex-1 text-[13.5px] leading-snug text-ink">
-          Install this app: tap{" "}
-          <span aria-hidden className="font-semibold">
-            ⎋
-          </span>{" "}
-          then <span className="font-semibold">Add to Home Screen</span>.
-        </p>
+        <p className="flex-1 text-[13.5px] leading-snug text-ink">{t("body")}</p>
         <button
           type="button"
-          aria-label="Dismiss"
+          aria-label={common("dismiss")}
           onClick={() => {
             localStorage.setItem(DISMISSED_KEY, "1");
             setVisible(false);

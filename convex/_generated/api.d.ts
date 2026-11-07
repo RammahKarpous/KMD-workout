@@ -13,6 +13,7 @@ import type * as exercises from "../exercises.js";
 import type * as foodEntries from "../foodEntries.js";
 import type * as foodProducts from "../foodProducts.js";
 import type * as http from "../http.js";
+import type * as legacy from "../legacy.js";
 import type * as lib_auth from "../lib/auth.js";
 import type * as lib_food from "../lib/food.js";
 import type * as logging from "../logging.js";
@@ -36,6 +37,7 @@ declare const fullApi: ApiFromModules<{
   foodEntries: typeof foodEntries;
   foodProducts: typeof foodProducts;
   http: typeof http;
+  legacy: typeof legacy;
   "lib/auth": typeof lib_auth;
   "lib/food": typeof lib_food;
   logging: typeof logging;

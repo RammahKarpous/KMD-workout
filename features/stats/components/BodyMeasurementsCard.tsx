@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation } from "convex/react";
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { api } from "@/convex/_generated/api";
 import type { Doc } from "@/convex/_generated/dataModel";
@@ -8,12 +9,12 @@ import { parseDateInputValue, toDateInputValue } from "@/shared/lib/date";
 
 type FieldKey = "bust" | "waist" | "hips" | "leftThigh" | "rightThigh";
 
-const FIELDS: { key: FieldKey; label: string }[] = [
-  { key: "bust", label: "Bust" },
-  { key: "waist", label: "Waist" },
-  { key: "hips", label: "Hips" },
-  { key: "leftThigh", label: "Left thigh" },
-  { key: "rightThigh", label: "Right thigh" },
+const FIELDS: { key: FieldKey; label: "bust" | "waist" | "hips" | "leftThigh" | "rightThigh" }[] = [
+  { key: "bust", label: "bust" },
+  { key: "waist", label: "waist" },
+  { key: "hips", label: "hips" },
+  { key: "leftThigh", label: "leftThigh" },
+  { key: "rightThigh", label: "rightThigh" },
 ];
 
 const EMPTY_VALUES: Record<FieldKey, string> = {
@@ -32,6 +33,7 @@ export function BodyMeasurementsCard({
   entries: Doc<"measurements">[] | undefined;
 }) {
   const upsert = useMutation(api.measurements.upsert);
+  const t = useTranslations("stats");
 
   const [date, setDate] = useState(() => toDateInputValue());
   const [values, setValues] = useState<Record<FieldKey, string>>(EMPTY_VALUES);
@@ -62,7 +64,7 @@ export function BodyMeasurementsCard({
       if (Number.isFinite(n)) patch[f.key] = n;
     }
     if (Object.keys(patch).length === 0) {
-      setError("Fill in at least one measurement.");
+      setError(t("fillOne"));
       return;
     }
     await upsert({ ts, ...patch });
@@ -71,10 +73,10 @@ export function BodyMeasurementsCard({
   return (
     <div className="mb-4 rounded-card bg-surface p-4">
       <div className="mb-3 text-[12.5px] font-bold uppercase tracking-wide text-muted">
-        Body measurements (cm)
+        {t("bodyMeasurements")}
       </div>
 
-      <label className="mb-1.5 block text-[12.5px] font-semibold text-muted">Date</label>
+      <label className="mb-1.5 block text-[12.5px] font-semibold text-muted">{t("date")}</label>
       <input
         type="date"
         value={date}
@@ -87,7 +89,7 @@ export function BodyMeasurementsCard({
         {FIELDS.map((f) => (
           <div key={f.key}>
             <label className="mb-1.5 block text-[12.5px] font-semibold text-muted">
-              {f.label}
+              {t(f.label)}
             </label>
             <input
               type="number"
@@ -108,7 +110,7 @@ export function BodyMeasurementsCard({
         onClick={save}
         className="mt-4 w-full rounded-2xl bg-surface-2 py-3.5 text-[15.5px] font-bold text-blue"
       >
-        {hasExisting ? "Update" : "Save"} measurements
+        {hasExisting ? t("updateMeasurements") : t("saveMeasurements")}
       </button>
     </div>
   );

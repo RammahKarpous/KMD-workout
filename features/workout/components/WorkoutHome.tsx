@@ -2,6 +2,7 @@
 
 import { useAuthActions } from "@convex-dev/auth/react";
 import { usePreloadedQuery, useQuery, type Preloaded } from "convex/react";
+import { useTranslations } from "next-intl";
 import { api } from "@/convex/_generated/api";
 import { ActiveStrengthScreen } from "@/features/logging/components/ActiveStrengthScreen";
 import { useActiveWorkout } from "@/features/logging/context/ActiveWorkoutContext";
@@ -26,6 +27,9 @@ export function WorkoutHome({
   const { push } = useSheet();
   const { start } = useActiveWorkout();
   const { signOut } = useAuthActions();
+  const t = useTranslations("workout");
+  const common = useTranslations("common");
+  const logging = useTranslations("logging");
 
   const folderIds = new Set(data.folders.map((f) => f._id));
   const ungrouped = data.routines.filter(
@@ -34,16 +38,18 @@ export function WorkoutHome({
 
   return (
     <div className="pt-2">
-      <div className="flex items-baseline justify-between pt-6.5 pb-4.5">
-        <div className="text-[26px] font-extrabold tracking-tight">
-          <span className="text-blue">KMD&apos;s Workout</span>
+      <div className="flex items-center justify-between pt-6.5 pb-4.5">
+        <div>
+          <div className="text-[26px] font-extrabold tracking-tight">
+            <span className="text-blue">KMD&apos;s Workout</span>
+          </div>
         </div>
         <button
           type="button"
           onClick={() => void signOut()}
-          className="rounded-lg bg-surface-2 px-3 py-2 text-[13px] font-semibold text-muted hover:text-ink"
+          className="rounded-lg bg-surface-2 px-3 py-2 text-[13px] font-semibold text-muted outline-none hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-solid focus-visible:outline-blue"
         >
-          Sign out
+          {common("signOut")}
         </button>
       </div>
 
@@ -55,7 +61,7 @@ export function WorkoutHome({
               onClick={() => {
                 const startTs = Date.now();
                 start(
-                  { title: "Workout", startTs },
+                  { title: logging("defaultTitle"), startTs },
                   <ActiveStrengthScreen initialExercises={[]} startTs={startTs} />
                 );
               }}
@@ -66,14 +72,14 @@ export function WorkoutHome({
         <div>
           <div className="mt-6 mb-3 flex items-center justify-between lg:mt-0">
             <span className="text-[12.5px] font-bold uppercase tracking-wide text-muted">
-              Routines
+              {t("routines")}
             </span>
             <button
               type="button"
               onClick={() => push("folder-editor", <FolderEditorSheet />)}
               className="px-1 py-0.5 text-[12.5px] font-bold text-blue"
             >
-              + New folder
+              {t("newFolder")}
             </button>
           </div>
 
@@ -82,7 +88,7 @@ export function WorkoutHome({
             onClick={() => push("routine-editor", <RoutineEditorSheet />)}
             className="mb-3 w-full rounded-card border-[1.6px] border-dashed border-line py-4 text-center text-[14.5px] font-bold text-blue"
           >
-            + New routine
+            {t("newRoutine")}
           </button>
 
           {data.folders.map((f) => (
@@ -96,17 +102,16 @@ export function WorkoutHome({
           {data.routines.length === 0 && data.folders.length === 0 ? (
             <div className="pt-1.5 text-center text-[14px] text-muted-2">
               <span className="mb-1.5 block text-lg font-bold text-muted">
-                No routines yet.
+                {t("noRoutines")}
               </span>
-              Build a fixed workout — give it a name and start it each week
-              with one tap. Group them into folders if you like.
+              {t("emptyBody")}
             </div>
           ) : (
             ungrouped.length > 0 && (
               <>
                 {data.folders.length > 0 && (
                   <div className="mb-3 border-t border-line pt-4 text-[12.5px] font-bold uppercase tracking-wide text-muted">
-                    My routines
+                    {t("myRoutines")}
                   </div>
                 )}
                 <div className="lg:grid lg:grid-cols-2 lg:gap-3">

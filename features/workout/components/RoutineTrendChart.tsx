@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "convex/react";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { api } from "@/convex/_generated/api";
 import type { Doc } from "@/convex/_generated/dataModel";
@@ -9,10 +10,10 @@ import { Chip } from "@/shared/ui/Chip";
 
 type Metric = "volume" | "reps" | "duration";
 
-const METRICS: { id: Metric; label: string }[] = [
-  { id: "volume", label: "Volume" },
-  { id: "reps", label: "Reps" },
-  { id: "duration", label: "Duration" },
+const METRICS: { id: Metric; label: "volume" | "reps" | "duration" }[] = [
+  { id: "volume", label: "volume" },
+  { id: "reps", label: "reps" },
+  { id: "duration", label: "duration" },
 ];
 
 type TargetSets = {
@@ -64,6 +65,9 @@ function valueOf(metric: Metric, session: Doc<"sessions">) {
  * line chart across this routine's logged sessions (or the routine's own
  * target sets as a "planned" headline if it's never been logged yet). */
 export function RoutineTrendChart({ routine }: { routine: Doc<"routines"> }) {
+  const t = useTranslations("workout");
+  const logging = useTranslations("logging");
+  const sets = useTranslations("sets");
   const [metric, setMetric] = useState<Metric>("volume");
   const sessions = useQuery(api.logging.getRoutineSessions, {
     routineId: routine._id,
@@ -82,14 +86,16 @@ export function RoutineTrendChart({ routine }: { routine: Doc<"routines"> }) {
       ? formatValue(metric, points[points.length - 1].value)
       : metric === "duration"
         ? "–"
-        : `${formatValue(metric, metric === "reps" ? totalReps(routine.exercises) : totalVolume(routine.exercises))} planned`;
+        : t("planned", {
+            value: formatValue(metric, metric === "reps" ? totalReps(routine.exercises) : totalVolume(routine.exercises)),
+          });
 
   return (
     <div className="mb-6">
       <div className="mb-3 flex gap-2">
         {METRICS.map((m) => (
           <Chip key={m.id} small active={metric === m.id} onClick={() => setMetric(m.id)}>
-            {m.label}
+            {m.label === "reps" ? sets("reps") : logging(m.label)}
           </Chip>
         ))}
       </div>
@@ -97,7 +103,7 @@ export function RoutineTrendChart({ routine }: { routine: Doc<"routines"> }) {
       {sessions.length >= 2 ? (
         <LineChart points={points} formatValue={(v) => formatValue(metric, v)} />
       ) : sessions.length === 1 ? (
-        <div className="py-3 text-[13px] text-muted-2">Do it again to see a trend.</div>
+        <div className="py-3 text-[13px] text-muted-2">{t("doItAgain")}</div>
       ) : null}
     </div>
   );

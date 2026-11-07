@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "convex/react";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { api } from "@/convex/_generated/api";
 import { DEFAULT_TARGETS, GROUP_ORDER } from "@/features/exercises/library/library";
@@ -19,6 +20,8 @@ export function SetsTab({
   const data = useQuery(api.stats.getWeekSets, { weekStartTs });
   const targets = useQuery(api.stats.getTargets);
   const [editingGroup, setEditingGroup] = useState<string | null>(null);
+  const t = useTranslations("stats");
+  const groups = useTranslations("groups");
   const loading = data === undefined || targets === undefined;
 
   return (
@@ -30,12 +33,12 @@ export function SetsTab({
       ) : (
         <>
           <div className="mb-5 flex gap-2.5">
-            <StatTile label="total sets" value={data.totalSets} />
-            <StatTile label="total reps" value={data.totalReps} />
+            <StatTile label={t("totalSetsLower")} value={data.totalSets} />
+            <StatTile label={t("totalRepsLower")} value={data.totalReps} />
           </div>
 
           <div className="mb-3 text-[12.5px] font-bold uppercase tracking-wide text-muted">
-            Sets per muscle group
+            {t("setsPerMuscle")}
           </div>
 
           <div className="flex flex-col gap-3">
@@ -44,25 +47,25 @@ export function SetsTab({
               const reps = Math.round(data.reps[grp] ?? 0);
               const fallback = DEFAULT_TARGETS[grp];
               const target = targets[grp] ?? { min: fallback[0], max: fallback[1] };
-              const status = sets < target.min ? "Under" : sets > target.max ? "Over" : "On track";
+              const status = sets < target.min ? "under" : sets > target.max ? "over" : "onTrack";
               const statusColor =
-                status === "Over"
+                status === "over"
                   ? "text-danger"
-                  : status === "On track"
+                  : status === "onTrack"
                     ? "text-green"
                     : "text-muted-2";
               const barColor =
-                status === "Over" ? "bg-danger" : status === "On track" ? "bg-green" : "bg-blue";
+                status === "over" ? "bg-danger" : status === "onTrack" ? "bg-green" : "bg-blue";
               const pct = target.max ? Math.min(100, Math.round((sets / target.max) * 100)) : 0;
 
               return (
                 <div key={grp} className="rounded-card bg-surface p-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-[15px] font-bold text-ink">{grp}</span>
-                    <span className={`text-[12px] font-bold ${statusColor}`}>{status}</span>
+                    <span className="text-[15px] font-bold text-ink">{groups(grp as "Glutes")}</span>
+                    <span className={`text-[12px] font-bold ${statusColor}`}>{t(status)}</span>
                   </div>
                   <div className="mt-1.5 flex items-center justify-between text-[13px] text-muted-2">
-                    <span>{sets} sets</span>
+                    <span>{t("setsCount", { count: sets })}</span>
                     <span>
                       {target.min}&ndash;{target.max}
                     </span>
@@ -71,7 +74,7 @@ export function SetsTab({
                     <div className={`h-full rounded-full ${barColor}`} style={{ width: `${pct}%` }} />
                   </div>
                   <div className="mt-2 flex items-center justify-between text-[12px] text-muted-2">
-                    <span>Total reps</span>
+                    <span>{t("totalReps")}</span>
                     <span>{reps}</span>
                   </div>
                   <button
@@ -79,7 +82,7 @@ export function SetsTab({
                     onClick={() => setEditingGroup(grp)}
                     className="mt-3 text-[12.5px] font-bold text-blue"
                   >
-                    Edit target
+                    {t("editTarget")}
                   </button>
                 </div>
               );
