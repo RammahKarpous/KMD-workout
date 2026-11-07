@@ -2,7 +2,7 @@ import { getAuthUserId } from "@convex-dev/auth/server";
 import { v } from "convex/values";
 import { exInfo, type CustomExerciseInfo } from "../features/exercises/library/exInfo";
 import { aggregateLoad } from "../features/exercises/library/aggregateLoad";
-import { BROAD, GROUP_ORDER } from "../features/exercises/library/library";
+import { BROAD, GROUP_ORDER, RADAR_AXES } from "../features/exercises/library/library";
 import type { Doc } from "./_generated/dataModel";
 import { mutation, query, type QueryCtx } from "./_generated/server";
 import { requireUserId } from "./lib/auth";
@@ -171,7 +171,7 @@ export const getWeekTrends = query({
   }),
   handler: async (ctx, { currentWeekStartTs }) => {
     const empty = { workouts: 0, durationSec: 0, volume: 0, sets: 0 };
-    const axes = ["Back", "Chest", "Core", "Shoulders", "Legs", "Arms"];
+    const axes = [...RADAR_AXES];
     const userId = await getAuthUserId(ctx);
     if (!userId) {
       return {

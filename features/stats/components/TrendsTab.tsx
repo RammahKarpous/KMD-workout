@@ -3,6 +3,7 @@
 import { useQuery } from "convex/react";
 import { useTranslations } from "next-intl";
 import { api } from "@/convex/_generated/api";
+import { RADAR_AXES, type RadarAxis } from "@/features/exercises/library/library";
 import { startOfWeek } from "@/shared/lib/date";
 import { RadarChart } from "@/shared/charts/RadarChart";
 
@@ -18,7 +19,7 @@ export function TrendsTab() {
   }
 
   const axes = data.radar.axes.map((label) => ({
-    label: groups(label as "Glutes"),
+    label: groups(asRadarAxis(label)),
     current: data.radar.current[label] ?? 0,
     previous: data.radar.previous[label] ?? 0,
   }));
@@ -46,6 +47,14 @@ export function TrendsTab() {
       </div>
     </div>
   );
+}
+
+function asRadarAxis(label: string): RadarAxis {
+  const axis = RADAR_AXES.find((candidate) => candidate === label);
+  if (!axis) {
+    throw new Error(`Statistics radar has no translation for "${label}".`);
+  }
+  return axis;
 }
 
 function TrendCard({
