@@ -1,7 +1,13 @@
-const CACHE_NAME = "workout-shell-v2";
+const CACHE_NAME = "workout-shell-v3";
 
 const PRECACHE_URLS = [
   "/",
+  "/food",
+  "/food/diary",
+  "/food/products",
+  "/food/overview",
+  "/food/dietist",
+  "/food/settings/limits",
   "/manifest.webmanifest",
   "/icon-192.png",
   "/icon-512.png",

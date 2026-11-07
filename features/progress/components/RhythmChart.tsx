@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "convex/react";
+import { useTranslations } from "next-intl";
 import { api } from "@/convex/_generated/api";
 import { startOfWeek } from "@/shared/lib/date";
 import { BarChart } from "@/shared/charts/BarChart";
@@ -11,13 +12,14 @@ function weekLabel(weekStartTs: number) {
 }
 
 export function RhythmChart() {
+  const t = useTranslations("progress");
   const currentWeekStartTs = startOfWeek().getTime();
   const weeks = useQuery(api.progress.weeklyRhythm, { currentWeekStartTs });
 
   return (
     <div className="mb-6">
       <div className="mb-3 text-[12.5px] font-bold uppercase tracking-wide text-muted">
-        Rhythm &middot; last 6 weeks
+        {t("rhythm")}
       </div>
       {weeks === undefined ? (
         <div className="h-44.25 animate-pulse rounded-card bg-surface" />

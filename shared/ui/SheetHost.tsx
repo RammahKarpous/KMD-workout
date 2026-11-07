@@ -128,7 +128,9 @@ export function SheetHost({ children }: { children: ReactNode }) {
 
   return (
     <SheetContext.Provider value={{ push, pop, replace, closeAll }}>
-      {children}
+      {/* While a sheet is open the page behind it is not a second tab stop.
+          The sheet itself is a sibling of this wrapper, so it stays usable. */}
+      <div inert={stack.length > 0}>{children}</div>
       <Sheet open={stack.length > 0} onClose={pop}>
         {/* Every stacked entry stays mounted (only display:none'd when not
             on top) so state and timers in a lower sheet (e.g. a routine

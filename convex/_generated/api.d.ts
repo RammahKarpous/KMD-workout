@@ -15,6 +15,7 @@ import type * as foodProducts from "../foodProducts.js";
 import type * as http from "../http.js";
 import type * as lib_auth from "../lib/auth.js";
 import type * as lib_food from "../lib/food.js";
+import type * as legacy from "../legacy.js";
 import type * as logging from "../logging.js";
 import type * as measurements from "../measurements.js";
 import type * as nutritionLimits from "../nutritionLimits.js";
@@ -38,6 +39,7 @@ declare const fullApi: ApiFromModules<{
   http: typeof http;
   "lib/auth": typeof lib_auth;
   "lib/food": typeof lib_food;
+  legacy: typeof legacy;
   logging: typeof logging;
   measurements: typeof measurements;
   nutritionLimits: typeof nutritionLimits;

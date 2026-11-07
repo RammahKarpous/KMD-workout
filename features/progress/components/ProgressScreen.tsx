@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "convex/react";
+import { useTranslations } from "next-intl";
 import { api } from "@/convex/_generated/api";
 import { startOfWeek } from "@/shared/lib/date";
 import { RhythmChart } from "./RhythmChart";
@@ -13,32 +14,33 @@ export function ProgressScreen() {
   });
   const totalSessions = useQuery(api.logging.getTotalSessionsCount);
   const loading = weekSummary === undefined || totalSessions === undefined;
+  const t = useTranslations("progress");
 
   return (
     <div className="pt-2">
       <div className="pt-6.5 pb-4.5 text-[26px] font-extrabold tracking-tight">
-        Progress
+        {t("heading")}
       </div>
 
       {!loading && totalSessions === 0 ? (
         <div className="py-10 text-center text-[14px] text-muted-2">
           <span className="mb-1.5 block text-lg font-bold text-muted">
-            No data yet.
+            {t("noData")}
           </span>
-          Once you log a few sessions, you&rsquo;ll see your rhythm here.
+          {t("noDataBody")}
         </div>
       ) : (
         <>
           <div className="mb-6 flex gap-2.5">
-            <StatTile label="Sessions this week" value={weekSummary?.count ?? 0} />
-            <StatTile label="Total sessions" value={totalSessions ?? 0} />
+            <StatTile label={t("sessionsThisWeek")} value={weekSummary?.count ?? 0} />
+            <StatTile label={t("totalSessions")} value={totalSessions ?? 0} />
           </div>
 
           <RhythmChart />
           <StrengthPerExerciseChart />
 
           <div className="mb-3 text-[12.5px] font-bold uppercase tracking-wide text-muted">
-            History
+            {t("history")}
           </div>
           <SessionHistoryList />
         </>

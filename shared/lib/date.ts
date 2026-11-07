@@ -28,13 +28,6 @@ export function todayKey(d: Date = new Date()): string {
   return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
 }
 
-export function greeting(hour: number = new Date().getHours()): string {
-  if (hour < 6) return "Still up?";
-  if (hour < 12) return "Good morning";
-  if (hour < 18) return "Good afternoon";
-  return "Good evening";
-}
-
 function pad(n: number): string {
   return n < 10 ? `0${n}` : `${n}`;
 }
@@ -59,48 +52,54 @@ export function formatDuration(totalSeconds: number): string {
   return h > 0 ? `${h}:${pad(m)}:${pad(s)}` : `${m}:${pad(s)}`;
 }
 
-const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-const MONTH_NAMES = [
-  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
-];
+export type RelativeDateLabels = { today: string; yesterday: string };
 
-/** "Today", "Yesterday", or "Wed 12 Jul". */
-export function formatDate(ts: number): string {
+/** "Today", "Yesterday", or a short weekday date in `locale`. */
+export function formatDate(
+  ts: number,
+  locale = "en",
+  labels: RelativeDateLabels = { today: "Today", yesterday: "Yesterday" },
+): string {
   const d = new Date(ts);
   const now = new Date();
   const yesterday = new Date(now.getTime() - 86400000);
-  if (todayKey(d) === todayKey(now)) return "Today";
-  if (todayKey(d) === todayKey(yesterday)) return "Yesterday";
-  return `${DAY_NAMES[d.getDay()]} ${d.getDate()} ${MONTH_NAMES[d.getMonth()]}`;
+  if (todayKey(d) === todayKey(now)) return labels.today;
+  if (todayKey(d) === todayKey(yesterday)) return labels.yesterday;
+  return new Intl.DateTimeFormat(locale, {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+  }).format(d);
 }
 
-/** "12 Jul" — compact, non-relative date for chart axis ticks. */
-export function formatShortDate(ts: number): string {
-  const d = new Date(ts);
-  return `${d.getDate()} ${MONTH_NAMES[d.getMonth()]}`;
+/** Compact date for chart axis ticks. */
+export function formatShortDate(ts: number, locale = "en"): string {
+  return new Intl.DateTimeFormat(locale, { day: "numeric", month: "short" }).format(new Date(ts));
 }
 
-/** "Wed 12 Jul 2026, 9:04". */
-export function formatFullDate(ts: number): string {
-  const d = new Date(ts);
-  return `${DAY_NAMES[d.getDay()]} ${d.getDate()} ${MONTH_NAMES[d.getMonth()]} ${d.getFullYear()}, ${d.getHours()}:${pad(d.getMinutes())}`;
+/** Weekday, date, and time, in `locale`. */
+export function formatFullDate(ts: number, locale = "en"): string {
+  return new Intl.DateTimeFormat(locale, {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(new Date(ts));
 }
 
-/** "12 Jul – 18 Jul" for the Statistics tab's week nav (Monday–Sunday). */
-export function formatWeekRange(weekStartTs: number): string {
+/** Monday–Sunday range for the Statistics week nav. */
+export function formatWeekRange(weekStartTs: number, locale = "en"): string {
   const start = new Date(weekStartTs);
   const end = new Date(weekStartTs + 6 * 86400000);
-  return `${start.getDate()} ${MONTH_NAMES[start.getMonth()]} – ${end.getDate()} ${MONTH_NAMES[end.getMonth()]}`;
+  const fmt = new Intl.DateTimeFormat(locale, { day: "numeric", month: "short" });
+  return `${fmt.format(start)} – ${fmt.format(end)}`;
 }
 
-const MONTH_NAMES_FULL = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December",
-];
-
-/** "July 2026" for the Workout home screen's month overview header. */
-export function formatMonthTitle(monthStartTs: number): string {
-  const d = new Date(monthStartTs);
-  return `${MONTH_NAMES_FULL[d.getMonth()]} ${d.getFullYear()}`;
+/** Month title for the workout home calendar. */
+export function formatMonthTitle(monthStartTs: number, locale = "en"): string {
+  return new Intl.DateTimeFormat(locale, { month: "long", year: "numeric" }).format(
+    new Date(monthStartTs),
+  );
 }

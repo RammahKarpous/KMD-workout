@@ -224,6 +224,14 @@ export const BROAD: Record<string, string> = {
   calves: "Calves",
 };
 
+/**
+ * Spokes on the Statistics trends radar. `Legs` is the sum of the four
+ * leg groups below; it is not its own weekly set target.
+ */
+export const RADAR_AXES = ["Back", "Chest", "Core", "Shoulders", "Legs", "Arms"] as const;
+
+export type RadarAxis = (typeof RADAR_AXES)[number];
+
 /** Display order for the 9 broad muscle groups on the Statistics tab. */
 export const GROUP_ORDER: string[] = [
   "Glutes",

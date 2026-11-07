@@ -1,13 +1,16 @@
 "use client";
 
 import { useMutation, usePreloadedQuery, useQuery, type Preloaded } from "convex/react";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { api } from "@/convex/_generated/api";
 import { ExerciseThumb } from "@/features/exercises/components/ExerciseThumb";
 import { MusclePanel } from "@/features/exercises/components/MusclePanel";
 import { SessionEditorSheet } from "@/features/logging/editors/SessionEditorSheet";
-import { formatDuration, formatFullDate } from "@/shared/lib/date";
+import { intensityKey } from "@/features/logging/intensity";
+import { useDateText } from "@/features/i18n/useDateText";
+import { formatDuration } from "@/shared/lib/date";
 import { computeSessionVolume } from "@/shared/lib/volume";
 import { ConfirmDialog } from "@/shared/ui/ConfirmDialog";
 import { BackIcon, TrashIcon } from "@/shared/ui/icons";
@@ -26,11 +29,16 @@ export function SessionDetail({
   const { push } = useSheet();
 
   const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const t = useTranslations("logging");
+  const common = useTranslations("common");
+  const cardioLabel = useTranslations("cardio");
+  const intensityLabel = useTranslations("intensity");
+  const dates = useDateText();
 
   if (!session) {
     return (
       <div className="pt-10 text-center text-sm text-muted-2">
-        Session not found.
+        {t("sessionNotFound")}
       </div>
     );
   }
@@ -40,8 +48,8 @@ export function SessionDetail({
   );
   const title =
     session.type === "strength"
-      ? (session.routineName ?? "Workout")
-      : (session.cardioType ?? "Cardio");
+      ? (session.routineName ?? t("defaultTitle"))
+      : (session.cardioType ? cardioLabel(session.cardioType as "Walking") : t("cardio"));
   const hasMuscleData =
     session.type === "strength" &&
     (session.exercises ?? []).some((ex) => !ex.cardio);
@@ -58,7 +66,7 @@ export function SessionDetail({
         className="mb-2 -ml-1.5 flex items-center gap-1 rounded-lg px-1.5 py-2 text-[15px] font-semibold text-muted"
       >
         <BackIcon />
-        Back
+        {common("back")}
       </button>
 
       <div className="mb-1 flex items-center justify-between gap-3">
@@ -69,11 +77,11 @@ export function SessionDetail({
             onClick={() => push("session-editor", <SessionEditorSheet session={session} />)}
             className="rounded-lg px-2 py-2 text-sm font-bold text-blue cursor-pointer"
           >
-            Edit
+            {t("edit")}
           </button>
           <button
             type="button"
-            aria-label="Delete session"
+            aria-label={t("deleteSession")}
             onClick={() => setConfirmingDelete(true)}
             className="rounded-lg p-3 text-danger cursor-pointer"
           >
@@ -82,9 +90,9 @@ export function SessionDetail({
         </div>
       </div>
       <div className="mb-5 text-[13px] text-muted-2">
-        {formatFullDate(session.ts)}
+        {dates.formatFullDate(session.ts)}
         {session.durationSec ? ` · ${formatDuration(session.durationSec)}` : ""}
-        {volume > 0 ? ` · ${Math.round(volume * 10) / 10} kg volume` : ""}
+        {volume > 0 ? ` · ${t("volumeLine", { amount: Math.round(volume * 10) / 10 })}` : ""}
       </div>
 
       {session.type === "strength" ? (
@@ -117,12 +125,12 @@ export function SessionDetail({
           >
             <ExerciseThumb name={session.cardioType ?? ""} />
             <span className="text-[15.5px] font-bold tracking-tight">
-              {session.cardioType}
+              {session.cardioType ? cardioLabel(session.cardioType as "Walking") : session.cardioType}
             </span>
           </button>
           <div className="text-[14px] text-ink">
-            {session.duration} min ·{" "}
-            {(session.intensity ?? "").replace(" (conversational)", "")}
+            {t("minutesValue", { count: session.duration ?? 0 })} ·{" "}
+            {session.intensity ? intensityLabel(intensityKey(session.intensity)) : ""}
           </div>
         </div>
       )}
@@ -130,7 +138,7 @@ export function SessionDetail({
       {session.notes && (
         <>
           <div className="mb-2 text-[12.5px] font-bold uppercase tracking-wide text-muted">
-            Note
+            {t("note")}
           </div>
           <p className="mb-6 text-[14px] leading-snug text-muted">
             {session.notes}
@@ -141,7 +149,7 @@ export function SessionDetail({
       {hasMuscleData && (
         <>
           <div className="mb-3 text-[12.5px] font-bold uppercase tracking-wide text-muted">
-            Muscles worked
+            {t("musclesWorked")}
           </div>
           <MusclePanel
             exercises={session.exercises ?? []}
@@ -153,7 +161,7 @@ export function SessionDetail({
       <ConfirmDialog
         open={confirmingDelete}
         danger
-        message={`Delete "${title}"?`}
+        message={t("deleteSessionConfirm", { name: title })}
         onCancel={() => setConfirmingDelete(false)}
         onConfirm={async () => {
           setConfirmingDelete(false);

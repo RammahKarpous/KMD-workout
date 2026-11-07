@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation } from "convex/react";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { api } from "@/convex/_generated/api";
 
@@ -16,6 +17,9 @@ export function TargetEditDialog({
   onClose: () => void;
 }) {
   const setTarget = useMutation(api.stats.setTarget);
+  const t = useTranslations("stats");
+  const common = useTranslations("common");
+  const groups = useTranslations("groups");
   const [min, setMin] = useState(String(initialMin));
   const [max, setMax] = useState(String(initialMax));
 
@@ -35,12 +39,12 @@ export function TargetEditDialog({
     >
       <div className="w-full max-w-85 rounded-2xl border border-line bg-surface p-5.5">
         <p className="mb-4 text-base font-bold text-ink">
-          Weekly set target &mdash; {group}
+          {t("weeklyTarget", { group: groups(group as "Glutes") })}
         </p>
         <div className="mb-5 flex gap-2.5">
           <label className="flex-1">
             <div className="mb-1.5 text-[11px] font-bold uppercase tracking-wide text-muted-2">
-              Min
+              {t("min")}
             </div>
             <input
               type="number"
@@ -52,7 +56,7 @@ export function TargetEditDialog({
           </label>
           <label className="flex-1">
             <div className="mb-1.5 text-[11px] font-bold uppercase tracking-wide text-muted-2">
-              Max
+              {t("max")}
             </div>
             <input
               type="number"
@@ -69,14 +73,14 @@ export function TargetEditDialog({
             onClick={onClose}
             className="rounded-[10px] bg-surface-2 px-4.5 py-2.75 text-sm font-bold text-ink"
           >
-            Cancel
+            {common("cancel")}
           </button>
           <button
             type="button"
             onClick={save}
             className="rounded-[10px] bg-blue px-4.5 py-2.75 text-sm font-bold text-white"
           >
-            Save
+            {t("save")}
           </button>
         </div>
       </div>

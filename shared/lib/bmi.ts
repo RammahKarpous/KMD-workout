@@ -7,12 +7,7 @@
 
 export type BmiCategory = "underweight" | "healthy" | "overweight" | "obesity";
 
-export const BMI_CATEGORY_LABEL: Record<BmiCategory, string> = {
-  underweight: "Underweight",
-  healthy: "Healthy weight",
-  overweight: "Overweight",
-  obesity: "Obesity",
-};
+export type BmiInputError = "weightInvalid" | "heightInvalid";
 
 /** WHO adult BMI thresholds (kg/m²), checked in ascending order. */
 const ADULT_THRESHOLDS: { belowMax: number; category: BmiCategory }[] = [
@@ -37,13 +32,13 @@ export function calculateAdultBmi(weightKg: number, heightCm: number): number {
   return Math.round((weightKg / (heightM * heightM)) * 10) / 10;
 }
 
-/** Returns a user-facing error message if the inputs are invalid, else null. */
-export function validateBmiInputs(weightKg: number, heightCm: number): string | null {
+/** Returns a message key when the inputs are invalid, else null. */
+export function validateBmiInputs(weightKg: number, heightCm: number): BmiInputError | null {
   if (!Number.isFinite(weightKg) || weightKg <= 0) {
-    return "Enter a weight greater than 0.";
+    return "weightInvalid";
   }
   if (!Number.isFinite(heightCm) || heightCm <= 0) {
-    return "Enter a height greater than 0.";
+    return "heightInvalid";
   }
   return null;
 }

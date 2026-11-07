@@ -1,5 +1,7 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+
 export function AlertDialog({
   open,
   message,
@@ -9,6 +11,7 @@ export function AlertDialog({
   message: string;
   onClose: () => void;
 }) {
+  const t = useTranslations("common");
   if (!open) return null;
   return (
     <div
@@ -25,7 +28,7 @@ export function AlertDialog({
             onClick={onClose}
             className="rounded-[10px] bg-blue px-4.5 py-2.75 text-sm font-bold text-white"
           >
-            OK
+            {t("ok")}
           </button>
         </div>
       </div>
